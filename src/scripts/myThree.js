@@ -1,4 +1,5 @@
 import {THREE} from '../vendor';
+import { identifier } from 'babel-types';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(90,window.innerWidth/window.innerHeight,1,12000);
@@ -45,19 +46,25 @@ class Ball{
     this.x = this.radius * Math.cos(this.theta);
     this.y = y;
     this.z = this.radius * Math.sin(this.theta);
-    this.life = 0;
-    this.geometry = new THREE.SphereGeometry(2,3,3);
+    // this.geometry = new THREE.SphereGeometry(2,2,2);
+    // this.material = new THREE.MeshBasicMaterial({color:0xffffff});
+    // this.sphere = new THREE.Mesh(this.geometry,this.material);
+    // this.sphere.position.x = this.x;
+    // this.sphere.position.y = this.y;
+    // this.sphere.position.z = this.z;
+    this.geometry = new THREE.BoxGeometry(2,2,2);
     this.material = new THREE.MeshBasicMaterial({color:0xffffff});
-    this.sphere = new THREE.Mesh(this.geometry,this.material);
-    this.sphere.position.x = this.x;
-    this.sphere.position.y = this.y;
-    this.sphere.position.z = this.z;
-    this.speed = Math.random()*.018;
+    this.cube = new THREE.Mesh(this.geometry,this.material);
+    this.cube.position.y = this.y;
+    this.cube.position.x = this.x;
+    this.cube.position.z = this.z;
+    this.speed = -(Math.random()*.068);
+    this.isDead = false;
   }
   move(){
-    this.theta -= this.speed;
-    this.sphere.position.x = this.radius * Math.cos(this.theta);
-    this.sphere.position.z = this.radius * Math.sin(this.theta);
+    this.theta += this.speed;
+    this.cube.position.x = this.radius * Math.cos(this.theta);
+    this.cube.position.z = this.radius * Math.sin(this.theta);
   }
 }
 
@@ -66,15 +73,16 @@ let theta = 0;
 let balls = [];
 
 let i = 0;
-while(balls.length < 6000){
-  i +=1;
+let j = 4000;
+while(i < j){
+  i +=.7;
 
   theta = (Math.random())*10;
   let ball = new Ball(250,theta,i);
-  ball.life = 1200;
   balls.push(ball);
 
-  scene.add(ball.sphere)
+  scene.add(ball.cube);
+  
 }
 
 camera.position.y = -380;
@@ -85,19 +93,22 @@ camera.lookAt(0,20,0);
 
 var animate = function () {
   requestAnimationFrame( animate );
-  camera.position.y += 7;
-  balls.forEach(ball => {
-    if(ball.life > 0){
-      ball.life--;
-    } else {
-      balls.pop();
-    }
-    
-    ball.move();
-    
-  })
-  
-  
+
+  camera.position.y += 8;
+
+  function growStars(arr){
+    arr.forEach(ball => {
+      theta = (Math.random())*10;
+      i += .7;
+      if(camera.position.y >= ball.y){
+        balls.shift();
+        balls.push(new Ball(250,theta,i));
+      }
+      ball.move();
+      if(balls.length < 5000) growStars(balls);
+    })
+  } 
+  growStars(balls);
   // ball.life--;
 	// cylinder.rotation.x += 0.01;
   // cylinder.rotation.y += 0.01;
