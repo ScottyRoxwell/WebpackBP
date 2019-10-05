@@ -1,8 +1,9 @@
 import {THREE} from '../vendor';
 import { identifier } from 'babel-types';
+import { transcode } from 'buffer';
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(90,window.innerWidth/window.innerHeight,1,12000);
+const camera = new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,1,12000);
 
 var light = new THREE.PointLight( 0xffffff, 100, 500);
 scene.add( light );
@@ -40,7 +41,9 @@ canvas.appendChild(renderer.domElement);
 
 
 class Ball{
+  
   constructor(radius,theta,y){
+    debugger;
     this.radius = radius;
     this.theta = theta;
     this.x = this.radius * Math.cos(this.theta);
@@ -52,62 +55,78 @@ class Ball{
     // this.sphere.position.x = this.x;
     // this.sphere.position.y = this.y;
     // this.sphere.position.z = this.z;
-    this.geometry = new THREE.BoxGeometry(2,2,2);
-    this.material = new THREE.MeshBasicMaterial({color:0xffffff});
-    this.cube = new THREE.Mesh(this.geometry,this.material);
-    this.cube.position.y = this.y;
-    this.cube.position.x = this.x;
-    this.cube.position.z = this.z;
-    this.speed = -(Math.random()*.068);
+
+    // this.geometry = new THREE.BoxGeometry(2,2,2);
+    // this.material = new THREE.MeshBasicMaterial({color:0xffffff});
+    // this.cube = new THREE.Mesh(this.geometry,this.material);
+    // this.cube.position.y = this.y;
+    // this.cube.position.x = this.x;
+    // this.cube.position.z = this.z;
+
+    var geometry = new THREE.PlaneGeometry( 25, 25 );
+    var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+    this.plane = new THREE.Mesh( geometry, material );
+    this.plane.position.y = this.y;
+    this.plane.position.x = this.x;
+    this.plane.position.z = this.z;
+    this.speed = -(Math.random()*.006);
     this.isDead = false;
   }
   move(){
     this.theta += this.speed;
-    this.cube.position.x = this.radius * Math.cos(this.theta);
-    this.cube.position.z = this.radius * Math.sin(this.theta);
+    this.plane.position.x = this.radius * Math.cos(this.theta);
+    this.plane.position.z = this.radius * Math.sin(this.theta);
   }
 }
 
 let theta = 0;
 
 let balls = [];
-
 let i = 0;
-let j = 4000;
-while(i < j){
-  i +=.7;
-
-  theta = (Math.random())*10;
-  let ball = new Ball(250,theta,i);
+while(i < 2300){
+  theta = Math.random()*10;
+  let ball = new Ball(550,theta,i);
   balls.push(ball);
+  let randoNum = Math.random()*55;
+  for(let k = 0; k < randoNum; k++){
+    theta = Math.random()*10;
+    let extraBall = new Ball(550,theta,i);
+    balls.push(extraBall);
+    scene.add(extraBall.plane);
+  }
+  scene.add(ball.plane);
 
-  scene.add(ball.cube);
-  
+  i+=26;
 }
 
-camera.position.y = -380;
+camera.position.y = -80;
 camera.lookAt(0,20,0);
 
 // console.log(direction)
-
-
 var animate = function () {
   requestAnimationFrame( animate );
+  
 
-  camera.position.y += 8;
+  camera.position.y += .2;
 
+
+  let j = 2001;
   function growStars(arr){
-    arr.forEach(ball => {
-      theta = (Math.random())*10;
-      i += .7;
-      if(camera.position.y >= ball.y){
-        balls.shift();
-        balls.push(new Ball(250,theta,i));
+    balls.forEach(ball => {
+      ball.plane.lookAt(0,ball.plane.position.y,0)
+      if(camera.position.y > ball.y){
+        ball.isDead = true;
+        let oldBall =  balls.shift();
+        oldBall.y = j;
+        balls.push(oldBall);
+        oldBall.move();
       }
+      
       ball.move();
-      if(balls.length < 5000) growStars(balls);
+      j+=4;
     })
-  } 
+  }
+  balls = balls.filter(ball => !ball.isDead);
   growStars(balls);
   // ball.life--;
 	// cylinder.rotation.x += 0.01;
