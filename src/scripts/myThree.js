@@ -1,21 +1,59 @@
 import {THREE} from '../vendor';
-import { identifier } from 'babel-types';
+import { identifier, thisExpression } from 'babel-types';
 import { transcode } from 'buffer';
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,12000);
+const loader = new THREE.FontLoader();
 
-var light = new THREE.PointLight( 0xdcceee, .5, 1270);
+loader.load('fonts/droid/droid_sans_regular.typeface.json', function(font){
+  var textGeo = new THREE.TextGeometry( 'Hello three.js!', {
+		font: font,
+		size: 80,
+		height: 5,
+		curveSegments: 12,
+		bevelEnabled: true,
+		bevelThickness: 10,
+		bevelSize: 8,
+		bevelOffset: 0,
+		bevelSegments: 5
+  });
+})
+
+var textMaterial = new THREE.MeshBasicMaterial(0xfffff);
+var text = new THREE.Mesh(loader,textMaterial);
+
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,7200);
+
+var light = new THREE.PointLight( 0xacaeff, .5, 1270);
 light.position.y = 2410;
 scene.add( light );
 
+
 var ambient= new THREE.AmbientLight( 0x40ae49, .1 ); // soft white light
 scene.add( ambient );
+
+// var spotLight = new THREE.SpotLight( 0xffffff );
+// spotLight.position.set( -90, 20, 20 );
+
+// spotLight.castShadow = true;
+
+// spotLight.shadow.mapSize.width = 1024;
+// spotLight.shadow.mapSize.height = 1024;
+
+// spotLight.shadow.camera.near = 500;
+// spotLight.shadow.camera.far = 4000;
+// spotLight.shadow.camera.fov = 30;
+
+// scene.add( spotLight );
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth,window.innerHeight);
 const canvas = document.querySelector('.canvas');
 canvas.appendChild(renderer.domElement);
+
+scene.add(loader.load());
+
 
 // var geometry = new THREE.CylinderGeometry( 5, 5, 40, 40, 64, true );
 // var material = new THREE.MeshPhysicalMaterial( { color: 0x00ff00 } );
@@ -64,15 +102,15 @@ class Ball{
     // this.cube.position.x = this.x;
     // this.cube.position.z = this.z;
 
-    var geometry = new THREE.PlaneGeometry( 30, 95 );
+    var geometry = new THREE.PlaneGeometry( 15, 55 );
     var material = new THREE.MeshLambertMaterial( {color: 0xeeccfe, side: THREE.DoubleSide} );
     this.plane = new THREE.Mesh( geometry, material );
     this.plane.position.x = this.x;
     this.plane.position.y = this.y;
     this.plane.position.z = this.z;
     this.r = Math.random();
-    this.gear = -Math.random()*.032;
-    this.speed = this.r < .97 ? this.speed = this.gear*.1: this.gear;
+    this.gear = -Math.random()*.072;
+    this.speed = this.r < .95 ? this.speed = this.gear*.1: this.gear;
 
     this.isDead = false;
   }
@@ -87,11 +125,11 @@ let theta = 0;
 
 let balls = [];
 let i = 0;
-while(i < 8300){
+while(i < 7300){
   theta = Math.random()*10;
   let ball = new Ball(550,theta,i);
   balls.push(ball);
-  let randoNum = Math.random()*55;
+  let randoNum = Math.random()*85;
   for(let k = 0; k < randoNum; k++){
     let setSpeed = ball.speed;
     theta = Math.random()*10;
@@ -102,10 +140,10 @@ while(i < 8300){
   }
   scene.add(ball.plane);
 
-  i+=71;
+  i+=42;
 }
 
-camera.position.y = -80;
+camera.position.y = -1080;
 camera.lookAt(0,20,0);
 
 // console.log(direction)
@@ -113,15 +151,15 @@ var animate = function () {
   requestAnimationFrame( animate );
   let random = Math.random();
 
-  if(random > .95){
-    light.position.y = Math.random()*8300;
+  if(random > .68){
+    light.position.y = Math.random()*7300;
     light.intensity = 2;
   }
-   light.intensity > .001 ? light.intensity -= .03 : light.intensity;
+   light.intensity > .0001 ? light.intensity -= .0001 : light.intensity = light.intensity;
   
-  (random > .2) ? light.position.y += 250 : light.position.y -= 250;
+  (random > .2) ? light.position.y += random*1650 : light.position.y -= 250;
 
-  camera.position.y += 1.98;
+  camera.position.y += 4.98;
 
 
   let j = 2001;
@@ -146,6 +184,7 @@ var animate = function () {
 	// cylinder.rotation.x += 0.01;
   // cylinder.rotation.y += 0.01;
   // cylinder.rotation.z += 0.0001;
+ console.log(camera.position.y)
 	renderer.render( scene, camera );
 };
 
