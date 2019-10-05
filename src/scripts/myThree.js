@@ -5,11 +5,11 @@ import { transcode } from 'buffer';
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,12000);
 
-var light = new THREE.PointLight( 0x44ff77, 5, 970);
+var light = new THREE.PointLight( 0xdcceee, .5, 1270);
 light.position.y = 2410;
 scene.add( light );
 
-var ambient= new THREE.AmbientLight( 0x404949, .2 ); // soft white light
+var ambient= new THREE.AmbientLight( 0x40ae49, .1 ); // soft white light
 scene.add( ambient );
 
 var renderer = new THREE.WebGLRenderer();
@@ -65,14 +65,14 @@ class Ball{
     // this.cube.position.z = this.z;
 
     var geometry = new THREE.PlaneGeometry( 30, 95 );
-    var material = new THREE.MeshLambertMaterial( {color: 0x33ff77, side: THREE.DoubleSide} );
+    var material = new THREE.MeshLambertMaterial( {color: 0xeeccfe, side: THREE.DoubleSide} );
     this.plane = new THREE.Mesh( geometry, material );
     this.plane.position.x = this.x;
     this.plane.position.y = this.y;
     this.plane.position.z = this.z;
     this.r = Math.random();
-    this.gear = -Math.random()*.006;
-    this.speed = this.r < .9 ? this.speed = this.gear*.1: this.gear;
+    this.gear = -Math.random()*.032;
+    this.speed = this.r < .97 ? this.speed = this.gear*.1: this.gear;
 
     this.isDead = false;
   }
@@ -87,7 +87,7 @@ let theta = 0;
 
 let balls = [];
 let i = 0;
-while(i < 4300){
+while(i < 8300){
   theta = Math.random()*10;
   let ball = new Ball(550,theta,i);
   balls.push(ball);
@@ -113,13 +113,15 @@ var animate = function () {
   requestAnimationFrame( animate );
   let random = Math.random();
 
-  if(random > .98){
-    light.position.y = Math.random()*4000;
-    light.intensity = 5;
+  if(random > .95){
+    light.position.y = Math.random()*8300;
+    light.intensity = 2;
   }
-   light.intensity > .02 ? light.intensity -= .04 : light.intensity;
+   light.intensity > .001 ? light.intensity -= .03 : light.intensity;
+  
+  (random > .2) ? light.position.y += 250 : light.position.y -= 250;
 
-  camera.position.y += .08;
+  camera.position.y += 1.98;
 
 
   let j = 2001;
