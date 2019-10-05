@@ -3,12 +3,13 @@ import { identifier } from 'babel-types';
 import { transcode } from 'buffer';
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,1,12000);
+const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,12000);
 
-var light = new THREE.PointLight( 0xffffff, 100, 500);
+var light = new THREE.PointLight( 0x44ff77, 5, 970);
+light.position.y = 2410;
 scene.add( light );
 
-var ambient= new THREE.AmbientLight( 0x404040 ); // soft white light
+var ambient= new THREE.AmbientLight( 0x404949, .2 ); // soft white light
 scene.add( ambient );
 
 var renderer = new THREE.WebGLRenderer();
@@ -63,13 +64,16 @@ class Ball{
     // this.cube.position.x = this.x;
     // this.cube.position.z = this.z;
 
-    var geometry = new THREE.PlaneGeometry( 25, 25 );
-    var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+    var geometry = new THREE.PlaneGeometry( 30, 95 );
+    var material = new THREE.MeshLambertMaterial( {color: 0x33ff77, side: THREE.DoubleSide} );
     this.plane = new THREE.Mesh( geometry, material );
-    this.plane.position.y = this.y;
     this.plane.position.x = this.x;
+    this.plane.position.y = this.y;
     this.plane.position.z = this.z;
-    this.speed = -(Math.random()*.006);
+    this.r = Math.random();
+    this.gear = -Math.random()*.006;
+    this.speed = this.r < .9 ? this.speed = this.gear*.1: this.gear;
+
     this.isDead = false;
   }
   move(){
@@ -83,20 +87,22 @@ let theta = 0;
 
 let balls = [];
 let i = 0;
-while(i < 2300){
+while(i < 4300){
   theta = Math.random()*10;
   let ball = new Ball(550,theta,i);
   balls.push(ball);
   let randoNum = Math.random()*55;
   for(let k = 0; k < randoNum; k++){
+    let setSpeed = ball.speed;
     theta = Math.random()*10;
     let extraBall = new Ball(550,theta,i);
+    extraBall.speed = setSpeed;
     balls.push(extraBall);
     scene.add(extraBall.plane);
   }
   scene.add(ball.plane);
 
-  i+=26;
+  i+=71;
 }
 
 camera.position.y = -80;
@@ -105,15 +111,21 @@ camera.lookAt(0,20,0);
 // console.log(direction)
 var animate = function () {
   requestAnimationFrame( animate );
-  
+  let random = Math.random();
 
-  camera.position.y += .2;
+  if(random > .98){
+    light.position.y = Math.random()*4000;
+    light.intensity = 5;
+  }
+   light.intensity > .02 ? light.intensity -= .04 : light.intensity;
+
+  camera.position.y += .08;
 
 
   let j = 2001;
   function growStars(arr){
     balls.forEach(ball => {
-      ball.plane.lookAt(0,ball.plane.position.y,0)
+      ball.plane.lookAt(0,ball.plane.position.y+70,0)
       if(camera.position.y > ball.y){
         ball.isDead = true;
         let oldBall =  balls.shift();
