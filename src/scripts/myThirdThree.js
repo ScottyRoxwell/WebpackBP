@@ -1,9 +1,11 @@
 import {THREE} from '../vendor';
 import { Geometry } from 'three';
+import { isInterfaceDeclaration } from 'babel-types';
+import { inherits } from 'util';
 
 const scene = new THREE.Scene();
-const distance = 220;
-const speed = 50;
+let distance;
+let speed;
 const camera = new THREE.PerspectiveCamera(128,window.innerWidth/window.innerHeight,1,distance);
 
 var ambient= new THREE.AmbientLight( 0x40ae49, 1 );
@@ -14,13 +16,16 @@ renderer.setSize(window.innerWidth,window.innerHeight);
 const canvas = document.querySelector('.canvas');
 canvas.appendChild(renderer.domElement);
 
-camera.position.y = -40;
-
-
-
 const planes = [];
 const wheels = [];
 
+init(220, .4, -22);
+
+function init(depth,descentSpeed, camStart){
+  distance = depth;
+  speed = descentSpeed;
+  camera.position.y = camStart;
+}
 
 class Plane{
   constructor(radius,theta,y,size){
@@ -84,8 +89,8 @@ class Tunnel{
   }
   makeTunnel(){
     let randomSpeed;
-    for(let i = 0; i < this._depth; i+=2){
-      randomSpeed = Math.random()*10;
+    for(let i = 0; i < this._depth; i+=1.5){
+      randomSpeed = Math.random()*.0001;
       let wheel = new Wheel(i, 80, 4, randomSpeed, 30);
       wheels.push(wheel);
       wheel.makeWheel();

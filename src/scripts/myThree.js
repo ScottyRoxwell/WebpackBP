@@ -2,24 +2,24 @@ import {THREE} from '../vendor';
 import { identifier, thisExpression } from 'babel-types';
 import { transcode } from 'buffer';
 
-const loader = new THREE.FontLoader();
+// const loader = new THREE.FontLoader();
 
-loader.load('fonts/droid/droid_sans_regular.typeface.json', function(font){
-  var textGeo = new THREE.TextGeometry( 'Hello three.js!', {
-		font: font,
-		size: 80,
-		height: 5,
-		curveSegments: 12,
-		bevelEnabled: true,
-		bevelThickness: 10,
-		bevelSize: 8,
-		bevelOffset: 0,
-		bevelSegments: 5
-  });
-})
+// loader.load('fonts/droid/droid_sans_regular.typeface.json', function(font){
+//   var textGeo = new THREE.TextGeometry( 'Hello three.js!', {
+// 		font: font,
+// 		size: 80,
+// 		height: 5,
+// 		curveSegments: 12,
+// 		bevelEnabled: true,
+// 		bevelThickness: 10,
+// 		bevelSize: 8,
+// 		bevelOffset: 0,
+// 		bevelSegments: 5
+//   });
+// })
 
-var textMaterial = new THREE.MeshBasicMaterial(0xfffff);
-var text = new THREE.Mesh(loader,textMaterial);
+// var textMaterial = new THREE.MeshBasicMaterial(0xfffff);
+// var text = new THREE.Mesh(loader,textMaterial);
 
 
 const scene = new THREE.Scene();
@@ -30,29 +30,29 @@ light.position.y = 2410;
 scene.add( light );
 
 
-var ambient= new THREE.AmbientLight( 0x40ae49, .1 ); // soft white light
+var ambient= new THREE.AmbientLight( 0x40ae49, 2 ); // soft white light
 scene.add( ambient );
 
-// var spotLight = new THREE.SpotLight( 0xffffff );
-// spotLight.position.set( -90, 20, 20 );
+var spotLight = new THREE.SpotLight( 0xffffff );
+spotLight.position.set( -90, 20, 20 );
 
-// spotLight.castShadow = true;
+spotLight.castShadow = true;
 
-// spotLight.shadow.mapSize.width = 1024;
-// spotLight.shadow.mapSize.height = 1024;
+spotLight.shadow.mapSize.width = 1024;
+spotLight.shadow.mapSize.height = 1024;
 
-// spotLight.shadow.camera.near = 500;
-// spotLight.shadow.camera.far = 4000;
-// spotLight.shadow.camera.fov = 30;
+spotLight.shadow.camera.near = 500;
+spotLight.shadow.camera.far = 4000;
+spotLight.shadow.camera.fov = 30;
 
-// scene.add( spotLight );
+scene.add( spotLight );
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth,window.innerHeight);
 const canvas = document.querySelector('.canvas');
 canvas.appendChild(renderer.domElement);
 
-scene.add(loader.load());
+// scene.add(loader.load());
 
 
 // var geometry = new THREE.CylinderGeometry( 5, 5, 40, 40, 64, true );
@@ -165,13 +165,12 @@ var animate = function () {
 
   let j = 2001;
   function growStars(arr){
-    balls.forEach(ball => {
+    arr.forEach(ball => {
       ball.plane.lookAt(0,ball.plane.position.y+70,0)
       if(camera.position.y > ball.y){
-        ball.isDead = true;
         let oldBall =  balls.shift();
         oldBall.y = j;
-        balls.push(oldBall);
+        arr.push(oldBall);
         oldBall.move();
       }
       
