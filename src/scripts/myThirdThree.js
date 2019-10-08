@@ -42,43 +42,56 @@ class Plane{
 }
 
 class Wheel{
-  constructor(y, radius, size, speed) {
+  constructor(y, radius, size, rotationSpeed, density, speed) {
     this._y = y;
     this._radius = radius;
     this._size = size;
+    this._rotationSpeed = rotationSpeed;
+    this._density = density;
     this._speed = speed;
   }
   makeWheel(){
-    for(let i = 0; i < Math.random()*60; i++){
+    for(let i = 0; i < Math.random()*this._density; i++){
       let randomTheta = Math.random()*Math.PI*2;
       let plane = new Plane(this._radius,randomTheta,this._y,this._size);
       plane.draw(randomTheta);  
     }
   }
   spin(){
-    theta -= this._speed;
+    theta -= this._rotationSpeed;
     planes.forEach(plane => {
       plane.position.x = this._radius * Math.cos(theta + plane._randomTheta);
       plane.position.z = this._radius * Math.sin(theta + plane._randomTheta);
       plane.lookAt(0,plane.position.y,0);
-    
-    })
-    
-    
+    })  
   }
-
+  bringForward(){
+    planes.forEach(plane => {
+      plane.position.y -= this._speed;
+      if(plane.position.y < -60){
+        plane.position.y += 800;
+      }
+    })
+  }
 }
 
-let wheel = new Wheel(40,20,2, 0.02)
-wheel.makeWheel()
+class Tunnel{
+  constructor(depth){
+    this._depth = depth;
+  }
+  makeTunnel(){
+
+  }
+}
+// Wheel constructor(y, radius, size, rotationSpeed, density, speed)
+let wheel = new Wheel(40, 30, 2, 0.02, 290, .3);
+wheel.makeWheel();
 
 let theta = 0;
 const animate = function () {
   requestAnimationFrame( animate );
   wheel.spin()
-  planes.forEach(plane =>{
-    console.log(plane.position.x,plane.position.y,plane.position.z)
-  })
+  wheel.bringForward();
 
 
    renderer.render( scene, camera );
