@@ -3,7 +3,7 @@ import { identifier } from 'babel-types';
 import { transcode } from 'buffer';
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,12000);
+const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,8300);
 
 var light = new THREE.PointLight( 0xdcceee, .5, 1270);
 light.position.y = 2410;
