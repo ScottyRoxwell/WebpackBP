@@ -5,7 +5,7 @@ const scene = new THREE.Scene();
 const distance = 6000;
 const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,distance);
 
-var ambient= new THREE.AmbientLight( 0x40ae49, 20 );
+var ambient= new THREE.AmbientLight( 0x40ae49, 1 );
 scene.add( ambient );
 
 var renderer = new THREE.WebGLRenderer();
@@ -14,21 +14,27 @@ const canvas = document.querySelector('.canvas');
 canvas.appendChild(renderer.domElement);
 
 const green = new THREE.Color(0x00ff00);
+const transparent = new THREE.Color(0xffffff,.5);
 const face = new THREE.Face3();
 
 
 var geometry = new THREE.CylinderGeometry( 60, 60, 10, 23, 1, true );
 for(let i = 0; i < geometry.faces.length; i+=2){
-  geometry.faces[i].color = green;
+  let randomNumber = Math.random();
+  if(randomNumber > .5){
+    geometry.faces[i].color = green;
+    geometry.faces[i+1].color = green;
+  }
+  
   console.log(geometry.faces[i])
 }
 
-var material = new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe: true} );
+var material = new THREE.MeshBasicMaterial( {color: transparent, wireframe: false, side: THREE.BackSide, vertexColors: THREE.FaceColors} );
 var cylinder = new THREE.Mesh( geometry, material );
 
 scene.add( cylinder );
 
-
+camera.position.z = 0;
 camera.position.y = -140;
 camera.lookAt(0,20,0);
 
