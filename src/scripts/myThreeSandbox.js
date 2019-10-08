@@ -23,7 +23,7 @@ let misterpointy = new Vector3();
 
 
 var geometry = new THREE.PlaneGeometry( 24, 24 );
-var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+var material = new THREE.MeshStandardMaterial( {color: 0xffff00, side: THREE.DoubleSide, metalness: 1.5} );
 var plane = new THREE.Mesh( geometry, material );
 scene.add( plane );
 
@@ -35,7 +35,6 @@ var animate = function () {
   misterpointy.z = radius * Math.sin(theta);
   // plane.rotation.y = Math.PI;
   plane.lookAt(misterpointy);
-  console.log(misterpointy)
 	renderer.render( scene, camera );
 };
 

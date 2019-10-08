@@ -25,7 +25,7 @@ var text = new THREE.Mesh(loader,textMaterial);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,7200);
 
-var light = new THREE.PointLight( 0xacaeff, .5, 1270);
+var light = new THREE.PointLight( 0xacaeff, 2, 1270);
 light.position.y = 2410;
 scene.add( light );
 
@@ -82,7 +82,6 @@ scene.add(loader.load());
 class Ball{
   
   constructor(radius,theta,y){
-    debugger;
     this.radius = radius;
     this.theta = theta;
     this.x = this.radius * Math.cos(this.theta);
@@ -103,7 +102,7 @@ class Ball{
     // this.cube.position.z = this.z;
 
     var geometry = new THREE.PlaneGeometry( 15, 55 );
-    var material = new THREE.MeshLambertMaterial( {color: 0xeeccfe, side: THREE.DoubleSide} );
+    var material = new THREE.MeshStandardMaterial( {color: 0xeeccfe, side: THREE.DoubleSide, roughness: 1.001, metalness: .55} );
     this.plane = new THREE.Mesh( geometry, material );
     this.plane.position.x = this.x;
     this.plane.position.y = this.y;
@@ -125,22 +124,25 @@ let theta = 0;
 
 let balls = [];
 let i = 0;
-while(i < 7300){
-  theta = Math.random()*10;
-  let ball = new Ball(550,theta,i);
-  balls.push(ball);
-  let randoNum = Math.random()*85;
-  for(let k = 0; k < randoNum; k++){
-    let setSpeed = ball.speed;
+function buildTunnel(i){
+  while(i < 500){
     theta = Math.random()*10;
-    let extraBall = new Ball(550,theta,i);
-    extraBall.speed = setSpeed;
-    balls.push(extraBall);
-    scene.add(extraBall.plane);
+    let ball = new Ball(550,theta,i);
+    balls.push(ball);
+    let randoNum = Math.random()*85;
+    for(let k = 0; k < randoNum; k++){
+      let setSpeed = ball.speed;
+      theta = Math.random()*10;
+      let extraBall = new Ball(550,theta,i);
+      extraBall.speed = setSpeed;
+      balls.push(extraBall);
+      scene.add(extraBall.plane);
+    }
+    scene.add(ball.plane);
+  
+    i+=42;
   }
-  scene.add(ball.plane);
-
-  i+=42;
+  
 }
 
 camera.position.y = -1080;
@@ -151,11 +153,11 @@ var animate = function () {
   requestAnimationFrame( animate );
   let random = Math.random();
 
-  if(random > .68){
+  if(random > .88){
     light.position.y = Math.random()*7300;
     light.intensity = 2;
   }
-   light.intensity > .0001 ? light.intensity -= .0001 : light.intensity = light.intensity;
+  //  light.intensity > .0000001 ? light.intensity -= .0000001 : light.intensity = light.intensity;
   
   (random > .2) ? light.position.y += random*1650 : light.position.y -= 250;
 
@@ -184,7 +186,7 @@ var animate = function () {
 	// cylinder.rotation.x += 0.01;
   // cylinder.rotation.y += 0.01;
   // cylinder.rotation.z += 0.0001;
- console.log(camera.position.y)
+
 	renderer.render( scene, camera );
 };
 
