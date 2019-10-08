@@ -142,7 +142,6 @@ function buildTunnel(i){
   
     i+=42;
   }
-  
 }
 
 camera.position.y = -1080;

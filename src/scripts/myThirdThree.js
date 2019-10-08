@@ -2,8 +2,9 @@ import {THREE} from '../vendor';
 import { Geometry } from 'three';
 
 const scene = new THREE.Scene();
-const distance = 6000;
-const camera = new THREE.PerspectiveCamera(28,window.innerWidth/window.innerHeight,1,distance);
+const distance = 220;
+const speed = 50;
+const camera = new THREE.PerspectiveCamera(128,window.innerWidth/window.innerHeight,1,distance);
 
 var ambient= new THREE.AmbientLight( 0x40ae49, 1 );
 scene.add( ambient );
@@ -13,10 +14,13 @@ renderer.setSize(window.innerWidth,window.innerHeight);
 const canvas = document.querySelector('.canvas');
 canvas.appendChild(renderer.domElement);
 
-camera.position.y = -90;
-camera.lookAt(0,20,0);
+camera.position.y = -40;
 
-let planes = [];
+
+
+const planes = [];
+const wheels = [];
+
 
 class Plane{
   constructor(radius,theta,y,size){
@@ -29,24 +33,23 @@ class Plane{
     this._randomTheta = 0;
   }
   draw(rT){
-    let geometry = new THREE.PlaneGeometry(this._size,this._size);
+    let geometry = new THREE.PlaneGeometry(this._size,1);
     let material = new THREE.MeshBasicMaterial({color: 0x00ff00, wireframe: false, side: THREE.DoubleSide});
     let plane = new THREE.Mesh(geometry,material);
     plane.position.x = this._x;
+    plane.position.y = this._y;
     plane.position.z = this._z;
     plane._randomTheta = rT;
     planes.push(plane);
-    console.log(plane)
     scene.add(plane);
   }
 }
 
 class Wheel{
-  constructor(y, radius, size, rotationSpeed, density, speed) {
+  constructor(y, radius, size, speed, density) {
     this._y = y;
     this._radius = radius;
     this._size = size;
-    this._rotationSpeed = rotationSpeed;
     this._density = density;
     this._speed = speed;
   }
@@ -58,7 +61,7 @@ class Wheel{
     }
   }
   spin(){
-    theta -= this._rotationSpeed;
+    theta -= this._speed;
     planes.forEach(plane => {
       plane.position.x = this._radius * Math.cos(theta + plane._randomTheta);
       plane.position.z = this._radius * Math.sin(theta + plane._randomTheta);
@@ -67,11 +70,11 @@ class Wheel{
   }
   bringForward(){
     planes.forEach(plane => {
-      plane.position.y -= this._speed;
-      if(plane.position.y < -60){
-        plane.position.y += 800;
+      if(plane.position.y < camera.position.y){
+        plane.position.y += distance;
       }
     })
+    
   }
 }
 
@@ -80,18 +83,28 @@ class Tunnel{
     this._depth = depth;
   }
   makeTunnel(){
-
+    let randomSpeed;
+    for(let i = 0; i < this._depth; i+=2){
+      randomSpeed = Math.random()*10;
+      let wheel = new Wheel(i, 80, 4, randomSpeed, 30);
+      wheels.push(wheel);
+      wheel.makeWheel();
+    }
   }
 }
-// Wheel constructor(y, radius, size, rotationSpeed, density, speed)
-let wheel = new Wheel(40, 30, 2, 0.02, 290, .3);
-wheel.makeWheel();
+// Wheel constructor(y, radius, size, theta, density, speed)
+const tunnel = new Tunnel(distance);
+tunnel.makeTunnel();
 
 let theta = 0;
 const animate = function () {
   requestAnimationFrame( animate );
-  wheel.spin()
-  wheel.bringForward();
+  wheels.forEach(wheel => {
+    wheel.spin();
+    wheel.bringForward();
+  })
+  camera.position.y += speed;
+  camera.lookAt(0,distance+camera.position.y,0);
 
 
    renderer.render( scene, camera );
