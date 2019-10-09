@@ -12,7 +12,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance);
 
 // Initiate Program
-init(distance, -80, .98, 655);
+init(distance, -80, .9, 655);
 function init(depth,camStart,descent,radius){
   distance = depth;
   descentSpeed = descent;
@@ -26,6 +26,7 @@ var light = new THREE.PointLight( 0xdcceee, .5, 1270);
 light.position.y = 2410;
 scene.add( light );
 
+// Can't get this light to do anything.
 var light2 = new THREE.PointLight( 0xffffff, 2, 100);
 scene.add( light2 );
 
@@ -37,6 +38,12 @@ var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth,window.innerHeight);
 const canvas = document.querySelector('.canvas');
 canvas.appendChild(renderer.domElement);
+
+class Camera{
+  constructor(){
+    
+  }
+}
 
 
 // Plane Class
@@ -59,7 +66,7 @@ class Plane{
     this.speed = r < .97 ? this.speed = this.gear*.1 : this.gear;
   }
   //function to spin the planes
-  move(){
+  spin(){
     this.theta += this.speed;
     this.mesh.position.x = this.radius * Math.cos(this.theta);
     this.mesh.position.z = this.radius * Math.sin(this.theta);
@@ -68,28 +75,28 @@ class Plane{
 
 // Particle Container Class
 class ParticleContainer{
-  constructor(x,y,z,speed,particleCount){
-    this._x = x;
+  constructor(y,speed,particleCount,sizeLimit,spread){
     this._y = y;
-    this._z = z;
     this._speed = speed;
     this._particleCount = particleCount;
+    this._size = sizeLimit;
+    this._spread = spread;
 
     let geometry = new THREE.Geometry();
     for(let i = 0; i < this._particleCount; i++){
       let randomTheta = Math.random()*Math.PI*2;
-      let randomRadius = Math.random()*tunnelRadius;
+      let randomRadius = Math.random()*tunnelRadius*.8;
       let particle = new THREE.Vector3(
         Math.cos(randomTheta)*randomRadius,
-        Math.random()*2140,
+        Math.random()*this._spread,
         Math.sin(randomTheta)*randomRadius
       );
       geometry.vertices.push(particle);
     }
     let material = new THREE.PointsMaterial({
       color: 0xffffff,
-      size: 1.1,
-      transparent: false
+      size: Math.random()*this._size,
+      transparent: true
     });
     this.particleCloud = new THREE.Points(geometry,material);
     this.particleCloud.position.y = this._y;
@@ -97,11 +104,44 @@ class ParticleContainer{
   move(){
     this.particleCloud.position.y += this._speed;
   }
+  lag(randomNumber){
+    this.particleCloud.geometry.vertices.forEach(vertex => {
+      randomNumber < .99 ? vertex.y += 1 : vertex.y -= 500;
+    });
+  }
+  jitter(amount, delta){
+    let shake = amount;
+    let random;
+    this.particleCloud.geometry.vertices.forEach(vertex => {
+      random = Math.random();
+      vertex.x += Math.cos(delta*Math.pow(random,2))*shake*Math.pow(random,2);
+      vertex.y += Math.sin(delta*.0001)*.01;
+      vertex.z += Math.sin(delta*Math.pow(random,2))*shake*Math.pow(random,2); 
+    });
+  }
+  surge(){
+    if(Math.random() > .95){
+      if(this.particleCloud.position.y > 1.5*distance){
+        this.particleCloud.position.y = camera.position.y -500;
+      }
+    }
+  } 
+  recycle(){
+    this.particleCloud.geometry.vertices.forEach(vertex => {
+      if(camera.position.y > vertex.y){
+        vertex.y = camera.position.y + distance;
+      }
+    })
+  }
 }
 
 // SPAWN PARTICLES
-let particleContainer = new ParticleContainer(0,-4000,0,140,600);
-scene.add(particleContainer.particleCloud);
+//Spawn Fast Clump
+// particleContainer Constructor(y,speed,density,sizeLimit,spread)
+let fastClump = new ParticleContainer(-4000,580,2200,8,4180);
+let floaters = new ParticleContainer(camera.position.y,0,1100,1,distance/4);
+scene.add(fastClump.particleCloud);
+scene.add(floaters.particleCloud);
 
 // CREATE TUNNEL
 let theta = 0;
@@ -122,10 +162,11 @@ while(i < distance){
   }
   scene.add(plane.mesh);
 
-  // Space allotted for ring
+  // Space allotted per ring
   i+=52;
 }
 let delta = 0;
+let cameraSpeed;
 var animate = function () {
   requestAnimationFrame( animate );
   
@@ -147,35 +188,40 @@ var animate = function () {
 
   // Camera Movement
   ++delta;
-  camera.position.x = Math.cos(delta*.01234)*200;
-  camera.position.z = Math.sin(delta*.01234)*80;
-  camera.rotation.z += .003;
-  // random > .3 ? camera.rotation.z += .003 : camera.rotation.z -=.003;
+  camera.position.x = Math.cos(delta*.01224)*200;
+  camera.position.z = Math.sin(delta*.01224)*80;
+  camera.rotation.z += .002;
+  random > .3 ? camera.rotation.z+= .002 : camera.rotation.z -=.001;
 
-  let cameraSpeed = (random > .9) ? 8 : 1;
-  camera.position.y += cameraSpeed;
+  cameraSpeed = (random > .98) ? 2 : 1;
   if(cameraSpeed > .005){
-    cameraSpeed -= .0008;
+    cameraSpeed -= .05;
   }
-  if(camera.position.y > cameraSpeed)
-  camera.position.y -= .009;
-  
-  //move on the z axis
+  camera.position.y += descentSpeed*cameraSpeed;
 
-  function recyclePlanes(arr){
+  // Send planes that are below camera to the back of the tunnel.
+  // Made this an IFFE just for the hell of it.
+  (function recyclePlanes(arr){
     arr.forEach(plane => {
       plane.mesh.lookAt(0,plane.mesh.position.y+70,0)
       if(camera.position.y > plane.mesh.position.y){
         plane.mesh.position.y = distance+camera.position.y;
-        plane.move();
       }
-      plane.move();
+      plane.spin();
     })
-  }
-  particleContainer.move();
-  recyclePlanes(elements);
-  light2.position.y += camera.position.y + 450;
+  })(elements);
+  // recyclePlanes(elements);
 
+
+  fastClump.move();
+  fastClump.lag(random);
+  fastClump.surge();
+
+  floaters.jitter(10,delta); 
+  floaters.recycle();
+  floaters.particleCloud.geometry.verticesNeedUpdate = true;
+
+  light2.position.y += camera.position.y + 450;
 	renderer.render( scene, camera );
 };
 
