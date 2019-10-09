@@ -92,13 +92,15 @@ class Plane{
 
 // Particle Container Class
 class ParticleContainer{
-  constructor(y,speed,particleCount,sizeLimit,spread,fill){
+  constructor(y,initialSpeed,particleCount,sizeLimit,spread,fill){
     this._y = y;
-    this._speed = speed;
+    this._initialSpeed = initialSpeed;
     this._particleCount = particleCount;
     this._size = sizeLimit;
     this._spread = spread;
     this._fill = fill;
+    this._acc = 1;
+    this._delta = 0;
 
     let geometry = new THREE.Geometry();
     for(let i = 0; i < this._particleCount; i++){
@@ -119,9 +121,6 @@ class ParticleContainer{
     this.particleCloud = new THREE.Points(geometry,material);
     this.particleCloud.position.y = this._y;
   }
-  move(){
-    this.particleCloud.position.y += this._speed;
-  }
   lag(randomNumber){
     this.particleCloud.geometry.vertices.forEach(vertex => {
       randomNumber < .99 ? vertex.y += 1 : vertex.y -= 500;
@@ -138,9 +137,15 @@ class ParticleContainer{
     });
   }
   surge(){
+    this._delta++;
+    this._acc += this._delta*7;
+
+    this.particleCloud.position.y += this._initialSpeed + this._acc;
     if(Math.random() > .95){
       if(this.particleCloud.position.y > distance*4){
-        this.particleCloud.position.y = camera.position.y -6000;
+        this.particleCloud.position.y = camera.position.y - this._spread - 35;
+        this._acc = 1;
+        this._delta = 0;
       }
     }
   } 
@@ -159,7 +164,7 @@ class ParticleContainer{
 
 //========================== SPAWN PARTICLES ==============================//
 // particleContainer Constructor(y,speed,density,sizeLimit,spread,fill)
-let fastClump = new ParticleContainer(-4000,3180,600,8,5180,.67);
+let fastClump = new ParticleContainer(-2550,1,900,8,5180,.74);
 let floaters = new ParticleContainer(camera.position.y,0,1100,1,distance/4,.85)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
@@ -227,11 +232,12 @@ var animate = function () {
 
 
   // fastClump Particles
-  fastClump.move();
+  console.log(fastClump.particleCloud.position.y)
   fastClump.lag(random);
   fastClump.surge();
-  fastClumpLight.position.y = fastClump.particleCloud.position.y + 2000;
+  fastClumpLight.position.y = fastClump.particleCloud.position.y;
   fastClump.particleCloud.geometry.verticesNeedUpdate = true;
+  
 
   // floater Particles
   floaters.jitter(10,delta); 
