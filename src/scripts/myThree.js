@@ -9,7 +9,7 @@ let density = 75;
 let tunnelRadius;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance);
+const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance*4);
 
 // Initiate Program
 init(distance, -80, 1.9, 655);
@@ -21,19 +21,22 @@ function init(depth,camStart,descent,radius){
   camera.lookAt(0,distance,0);
 }
 
-// LIGHTS
+//==================================== LIGHTS =======================================//
+// Sparks
 var light = new THREE.PointLight( 0xdcceee, .5, 1270);
 light.position.y = 2410;
 scene.add( light );
 
-// Can't get this light to do anything.
-var light2 = new THREE.PointLight( 0xffffff, 2, 100);
-scene.add( light2 );
+// FastClump Light
+var fastClumpLight = new THREE.PointLight( 0xffffff, 2, tunnelRadius*1.2, .9);
+scene.add( fastClumpLight );
 
 // AMBIENT LIGHT
 var ambient= new THREE.AmbientLight( 0x40ae49, .3 ); 
 scene.add( ambient );
+//=================================================================================//
 
+//Set Up DOM Element
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth,window.innerHeight);
 const canvas = document.querySelector('.canvas');
@@ -47,8 +50,8 @@ class Camera{
   movement(deltaTime,randomNum){
     camera.position.x = Math.cos(deltaTime*.01224)*200;
     camera.position.z = Math.sin(deltaTime*.01224)*80;
-    camera.rotation.z += .002;
-    randomNum > .3 ? camera.rotation.z+= .002 : camera.rotation.z -=.001;
+    camera.rotation.z += .003;
+    randomNum > .3 ? camera.rotation.z+= .003 : camera.rotation.z -=.001;
  
     cameraSpeed = (randomNum > .98) ? 2 : 1;
     if(cameraSpeed > .005){
@@ -58,6 +61,7 @@ class Camera{
   }
 }
 
+//=============================== GEOMETRIES =================================//
 // Plane Class
 class Plane{
   constructor(radius,theta,y){
@@ -87,17 +91,18 @@ class Plane{
 
 // Particle Container Class
 class ParticleContainer{
-  constructor(y,speed,particleCount,sizeLimit,spread){
+  constructor(y,speed,particleCount,sizeLimit,spread,fill){
     this._y = y;
     this._speed = speed;
     this._particleCount = particleCount;
     this._size = sizeLimit;
     this._spread = spread;
+    this._fill = fill;
 
     let geometry = new THREE.Geometry();
     for(let i = 0; i < this._particleCount; i++){
       let randomTheta = Math.random()*Math.PI*2;
-      let randomRadius = Math.random()*tunnelRadius*.8;
+      let randomRadius = Math.random()*tunnelRadius*this._fill;
       let particle = new THREE.Vector3(
         Math.cos(randomTheta)*randomRadius,
         Math.random()*this._spread,
@@ -133,35 +138,35 @@ class ParticleContainer{
   }
   surge(){
     if(Math.random() > .95){
-      if(this.particleCloud.position.y > 1.5*distance){
-        this.particleCloud.position.y = camera.position.y -2000;
+      if(this.particleCloud.position.y > distance*4){
+        this.particleCloud.position.y = camera.position.y -6000;
       }
     }
   } 
   recycle(){
     this.particleCloud.geometry.vertices.forEach(vertex => {
       if(camera.position.y > vertex.y){
-        console.log(vertex)
+        // console.log(vertex)
         vertex.y += distance/4;
-        console.log(vertex)
+        // console.log(vertex)
       }
     })
-    console.log(camera.position.y);
+    // console.log(camera.position.y);
   }
 }
+//=====================================================================//
 
-// SPAWN PARTICLES
-//Spawn Fast Clump
-// particleContainer Constructor(y,speed,density,sizeLimit,spread)
-let fastClump = new ParticleContainer(-4000,580,2200,8,4180);
-let floaters = new ParticleContainer(camera.position.y,0,1100,1,distance/4)
+//========================== SPAWN PARTICLES ==============================//
+// particleContainer Constructor(y,speed,density,sizeLimit,spread,fill)
+let fastClump = new ParticleContainer(-4000,3180,600,8,5180,.67);
+let floaters = new ParticleContainer(camera.position.y,0,1100,1,distance/4,.85)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
 
 // Instantiate Camera Instance
 let camera1 = new Camera();
 
-// CREATE TUNNEL
+//=============== CREATE TUNNEL ===============//
 let theta = 0;
 let elements = [];
 let i = 0;
@@ -184,7 +189,7 @@ while(i < distance){
   i+=35;
 }
 
-// ANIMATION RENDERING
+// =========================== ANIMATION RENDERING =============================//
 let delta = 0;
 let cameraSpeed;
 var animate = function () {
@@ -220,15 +225,18 @@ var animate = function () {
   // recyclePlanes(elements);
 
 
+  // fastClump Particles
   fastClump.move();
   fastClump.lag(random);
   fastClump.surge();
+  fastClumpLight.position.y = fastClump.particleCloud.position.y + 2000;
+  fastClump.particleCloud.geometry.verticesNeedUpdate = true;
 
+  // floater Particles
   floaters.jitter(10,delta); 
   floaters.recycle();
   floaters.particleCloud.geometry.verticesNeedUpdate = true;
 
-  light2.position.y += camera.position.y + 450;
 	renderer.render( scene, camera );
 };
 
