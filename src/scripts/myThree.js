@@ -79,7 +79,8 @@ class Plane{
     this.mesh.position.z = this.z;
     let r = Math.random();
     this.gear = -Math.random()*.032;
-    this.speed = r < .92 ? this.speed = this.gear*.1 : this.gear;
+    // r predicts likliness of fast spinning rings
+    this.speed = r < .90 ? this.speed = this.gear*.1 : this.gear;
   }
   //function to spin the planes
   spin(){
