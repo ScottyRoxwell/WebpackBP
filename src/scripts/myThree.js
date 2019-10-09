@@ -1,20 +1,22 @@
 import {THREE} from '../vendor';
-import { identifier, isInterfaceDeclaration } from 'babel-types';
+import { identifier, isInterfaceDeclaration, thisExpression } from 'babel-types';
 import { transcode } from 'buffer';
 
 // Variables
 let distance = 5000;
 let descentSpeed;
 let density = 55;
+let tunnelRadius;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance);
 
 // Initiate Program
-init(distance, -80, .98);
-function init(depth,camStart,descent){
+init(distance, -80, .98, 655);
+function init(depth,camStart,descent,radius){
   distance = depth;
   descentSpeed = descent;
+  tunnelRadius = radius;
   camera.position.y = camStart;
   camera.lookAt(0,distance,0);
 }
@@ -64,19 +66,56 @@ class Plane{
   }
 }
 
+// Particle Container Class
+class ParticleContainer{
+  constructor(x,y,z,speed,particleCount){
+    this._x = x;
+    this._y = y;
+    this._z = z;
+    this._speed = speed;
+    this._particleCount = particleCount;
+
+    let geometry = new THREE.Geometry();
+    for(let i = 0; i < this._particleCount; i++){
+      let randomTheta = Math.random()*Math.PI*2;
+      let randomRadius = Math.random()*tunnelRadius;
+      let particle = new THREE.Vector3(
+        Math.cos(randomTheta)*randomRadius,
+        Math.random()*2140,
+        Math.sin(randomTheta)*randomRadius
+      );
+      geometry.vertices.push(particle);
+    }
+    let material = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 1.1,
+      transparent: false
+    });
+    this.particleCloud = new THREE.Points(geometry,material);
+    this.particleCloud.position.y = this._y;
+  }
+  move(){
+    this.particleCloud.position.y += this._speed;
+  }
+}
+
+// SPAWN PARTICLES
+let particleContainer = new ParticleContainer(0,-4000,0,140,600);
+scene.add(particleContainer.particleCloud);
+
 // CREATE TUNNEL
 let theta = 0;
 let elements = [];
 let i = 0;
 while(i < distance){
   theta = Math.random()*10;
-  let plane = new Plane(650,theta,i);
+  let plane = new Plane(tunnelRadius,theta,i);
   elements.push(plane);
   let randoNum = Math.random()*density;
   for(let k = 0; k < randoNum; k++){
     let setSpeed = plane.speed;
     theta = Math.random()*10;
-    let childPlane = new Plane(550,theta,i);
+    let childPlane = new Plane(tunnelRadius,theta,i);
     childPlane.speed = setSpeed;
     elements.push(childPlane);
     scene.add(childPlane.mesh);
@@ -133,6 +172,7 @@ var animate = function () {
       plane.move();
     })
   }
+  particleContainer.move();
   recyclePlanes(elements);
   light2.position.y += camera.position.y + 450;
 
