@@ -5,14 +5,14 @@ import { transcode } from 'buffer';
 // Variables
 let distance = 5000;
 let descentSpeed;
-let density = 55;
+let density = 75;
 let tunnelRadius;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance);
 
 // Initiate Program
-init(distance, -80, .9, 655);
+init(distance, -80, 1.9, 655);
 function init(depth,camStart,descent,radius){
   distance = depth;
   descentSpeed = descent;
@@ -39,12 +39,24 @@ renderer.setSize(window.innerWidth,window.innerHeight);
 const canvas = document.querySelector('.canvas');
 canvas.appendChild(renderer.domElement);
 
+// CAMERA CLASS
 class Camera{
   constructor(){
-    
+  }
+  // Camera Movement
+  movement(deltaTime,randomNum){
+    camera.position.x = Math.cos(deltaTime*.01224)*200;
+    camera.position.z = Math.sin(deltaTime*.01224)*80;
+    camera.rotation.z += .002;
+    randomNum > .3 ? camera.rotation.z+= .002 : camera.rotation.z -=.001;
+ 
+    cameraSpeed = (randomNum > .98) ? 2 : 1;
+    if(cameraSpeed > .005){
+      cameraSpeed -= .05;
+    }
+  camera.position.y += descentSpeed*cameraSpeed;
   }
 }
-
 
 // Plane Class
 class Plane{
@@ -55,7 +67,7 @@ class Plane{
     this.y = y;
     this.z = this.radius * Math.sin(this.theta);
 
-    let geometry = new THREE.PlaneGeometry( 39, 35 );
+    let geometry = new THREE.PlaneGeometry( 39, 30 );
     let material = new THREE.MeshLambertMaterial( {color: 0xeeccfe, side: THREE.DoubleSide} );
     this.mesh = new THREE.Mesh( geometry, material );
     this.mesh.position.x = this.x;
@@ -63,7 +75,7 @@ class Plane{
     this.mesh.position.z = this.z;
     let r = Math.random();
     this.gear = -Math.random()*.032;
-    this.speed = r < .97 ? this.speed = this.gear*.1 : this.gear;
+    this.speed = r < .92 ? this.speed = this.gear*.1 : this.gear;
   }
   //function to spin the planes
   spin(){
@@ -122,16 +134,19 @@ class ParticleContainer{
   surge(){
     if(Math.random() > .95){
       if(this.particleCloud.position.y > 1.5*distance){
-        this.particleCloud.position.y = camera.position.y -500;
+        this.particleCloud.position.y = camera.position.y -2000;
       }
     }
   } 
   recycle(){
     this.particleCloud.geometry.vertices.forEach(vertex => {
       if(camera.position.y > vertex.y){
-        vertex.y = camera.position.y + distance;
+        console.log(vertex)
+        vertex.y += distance/4;
+        console.log(vertex)
       }
     })
+    console.log(camera.position.y);
   }
 }
 
@@ -139,9 +154,12 @@ class ParticleContainer{
 //Spawn Fast Clump
 // particleContainer Constructor(y,speed,density,sizeLimit,spread)
 let fastClump = new ParticleContainer(-4000,580,2200,8,4180);
-let floaters = new ParticleContainer(camera.position.y,0,1100,1,distance/4);
+let floaters = new ParticleContainer(camera.position.y,0,1100,1,distance/4)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
+
+// Instantiate Camera Instance
+let camera1 = new Camera();
 
 // CREATE TUNNEL
 let theta = 0;
@@ -163,16 +181,18 @@ while(i < distance){
   scene.add(plane.mesh);
 
   // Space allotted per ring
-  i+=52;
+  i+=35;
 }
+
+// ANIMATION RENDERING
 let delta = 0;
 let cameraSpeed;
 var animate = function () {
   requestAnimationFrame( animate );
+  let random = Math.random();
+  delta++;
   
   // ANIMATE LIGHTS
-  let random = Math.random();
-
   (random > .97) ? ambient.intensity += .9 : ambient.intensity -= (ambient.intensity > .4) ? .04 : 0;
 
   if(random > .95){
@@ -183,21 +203,8 @@ var animate = function () {
   ambient.intensity > .3 ? ambient.intensity -= .09 : ambient.intensity;
   (random > .2) ? light.position.y += 1050 : light.position.y -= 250;
 
-  // Move camera up Y-Axis
-  camera.position.y += descentSpeed;;
-
-  // Camera Movement
-  ++delta;
-  camera.position.x = Math.cos(delta*.01224)*200;
-  camera.position.z = Math.sin(delta*.01224)*80;
-  camera.rotation.z += .002;
-  random > .3 ? camera.rotation.z+= .002 : camera.rotation.z -=.001;
-
-  cameraSpeed = (random > .98) ? 2 : 1;
-  if(cameraSpeed > .005){
-    cameraSpeed -= .05;
-  }
-  camera.position.y += descentSpeed*cameraSpeed;
+  // CAMERA
+  camera1.movement(delta,random);
 
   // Send planes that are below camera to the back of the tunnel.
   // Made this an IFFE just for the hell of it.
