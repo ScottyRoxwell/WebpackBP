@@ -13,7 +13,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance*4);
 
 // Initiate Program
-init(distance, -80, .92, 655);
+init(distance, -80, 1.22, 655);
 function init(depth,camStart,descent,radius){
   distance = depth;
   descentSpeed = descent;
@@ -96,7 +96,7 @@ class Plane{
 
 // Particle Container Class
 class ParticleContainer{
-  constructor(y,initialSpeed,particleCount,sizeLimit,spread,fill){
+  constructor(y,initialSpeed,particleCount,sizeLimit,spread,fill,opacity=1){
     this._y = y;
     this._initialSpeed = initialSpeed;
     this._particleCount = particleCount;
@@ -105,6 +105,7 @@ class ParticleContainer{
     this._fill = fill;
     this._acc = 1;
     this._delta = 0;
+    this._opacity = opacity;  
 
     let geometry = new THREE.Geometry();
     for(let i = 0; i < this._particleCount; i++){
@@ -115,11 +116,13 @@ class ParticleContainer{
         Math.random()*this._spread,
         Math.sin(randomTheta)*randomRadius
       );
+      // if(this._opacity) particle.opacity = Math.random()*.9;
       particle.speed = Math.random() > .1 ? Math.random()*.3 : Math.random();
       geometry.vertices.push(particle);
     }
     let material = new THREE.PointsMaterial({
       color: 0xffffff,
+      opacity: this._opacity,
       size: Math.random()*this._size,
       transparent: true
     });
@@ -173,9 +176,9 @@ class ParticleContainer{
 //=====================================================================//
 
 //========================== SPAWN PARTICLES ==============================//
-// particleContainer Constructor(y,speed,density,particleSizeLimit,spread,fill)
+// particleContainer Constructor(y,speed,density,particleSizeLimit,spread,fill,opacity)
 let fastClump = new ParticleContainer(-distance*3,1,800,8,distance,.74);
-let floaters = new ParticleContainer(camera.position.y-100,0,1400,2.2,distance/2,.85)
+let floaters = new ParticleContainer(camera.position.y-100,0,1200,2.2,distance/4,.85,.8)
 console.log(floaters)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
