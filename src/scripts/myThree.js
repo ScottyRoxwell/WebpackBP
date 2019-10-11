@@ -1,4 +1,5 @@
 import {THREE} from '../vendor';
+import noise from './utils/perlinNoise';
 import { identifier, isInterfaceDeclaration, thisExpression } from 'babel-types';
 import { transcode } from 'buffer';
 
@@ -12,7 +13,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance*4);
 
 // Initiate Program
-init(distance, -80, 1.9, 655);
+init(distance, -80, 0, 655);
 function init(depth,camStart,descent,radius){
   distance = depth;
   descentSpeed = descent;
@@ -20,6 +21,9 @@ function init(depth,camStart,descent,radius){
   camera.position.y = camStart;
   camera.lookAt(0,distance,0);
 }
+
+let test = noise(34)
+console.log(test)
 
 //==================================== LIGHTS =======================================//
 // Sparks
@@ -111,6 +115,7 @@ class ParticleContainer{
         Math.random()*this._spread,
         Math.sin(randomTheta)*randomRadius
       );
+      particle.speed = Math.random();
       geometry.vertices.push(particle);
     }
     let material = new THREE.PointsMaterial({
@@ -128,18 +133,21 @@ class ParticleContainer{
   }
   jitter(amount, delta){
     let shake = amount;
-    let random;
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      random = Math.random();
-      vertex.x += Math.cos(delta*Math.pow(random,2))*shake*Math.pow(random,2);
-      vertex.y += Math.sin(delta*.0001)*.01;
-      vertex.z += Math.sin(delta*Math.pow(random,2))*shake*Math.pow(random,2); 
+      delta += .01;
+      let p = noise(delta*.1);
+      let q = noise((delta+.03)*.1);
+      p = THREE.Math.mapLinear(p,0,1,-shake,shake);
+      
+
+      vertex.x += p*vertex.speed*Math.random();
+      vertex.y += vertex.speed;
+      vertex.z += q*vertex.speed*Math.random(); 
     });
   }
   surge(){
     this._delta++;
     this._acc += this._delta*7;
-
     this.particleCloud.position.y += this._initialSpeed + this._acc;
     if(Math.random() > .95){
       if(this.particleCloud.position.y > distance*4){
@@ -164,8 +172,9 @@ class ParticleContainer{
 
 //========================== SPAWN PARTICLES ==============================//
 // particleContainer Constructor(y,speed,density,sizeLimit,spread,fill)
-let fastClump = new ParticleContainer(-2550,1,900,8,5180,.74);
+let fastClump = new ParticleContainer(-2550,1,0,8,5180,.74);
 let floaters = new ParticleContainer(camera.position.y,0,1100,1,distance/4,.85)
+console.log(floaters)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
 
@@ -215,7 +224,7 @@ var animate = function () {
   (random > .2) ? light.position.y += 1050 : light.position.y -= 250;
 
   // CAMERA
-  camera1.movement(delta,random);
+  // camera1.movement(delta,random);
 
   // Send planes that are below camera to the back of the tunnel.
   // Made this an IFFE just for the hell of it.
@@ -232,15 +241,15 @@ var animate = function () {
 
 
   // fastClump Particles
-  console.log(fastClump.particleCloud.position.y)
+  // console.log(fastClump.particleCloud.position.y)
   fastClump.lag(random);
-  fastClump.surge();
+  // fastClump.surge();
   fastClumpLight.position.y = fastClump.particleCloud.position.y;
   fastClump.particleCloud.geometry.verticesNeedUpdate = true;
   
 
   // floater Particles
-  floaters.jitter(10,delta); 
+  floaters.jitter(3,delta); 
   floaters.recycle();
   floaters.particleCloud.geometry.verticesNeedUpdate = true;
 
