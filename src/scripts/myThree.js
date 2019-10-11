@@ -13,7 +13,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance*4);
 
 // Initiate Program
-init(distance, -80, 0, 655);
+init(distance, -80, 1.92, 655);
 function init(depth,camStart,descent,radius){
   distance = depth;
   descentSpeed = descent;
@@ -115,7 +115,7 @@ class ParticleContainer{
         Math.random()*this._spread,
         Math.sin(randomTheta)*randomRadius
       );
-      particle.speed = Math.random();
+      particle.speed = Math.random() > .1 ? Math.random()*.3 : Math.random();
       geometry.vertices.push(particle);
     }
     let material = new THREE.PointsMaterial({
@@ -135,13 +135,13 @@ class ParticleContainer{
     let shake = amount;
     this.particleCloud.geometry.vertices.forEach(vertex => {
       delta += .01;
-      let p = noise(delta*.1);
-      let q = noise((delta+.03)*.1);
+      let p = noise(delta*.01);
+      let q = noise((delta+.03)*.01);
       p = THREE.Math.mapLinear(p,0,1,-shake,shake);
       
 
       vertex.x += p*vertex.speed*Math.random();
-      vertex.y += vertex.speed;
+      vertex.y += vertex.speed*10;
       vertex.z += q*vertex.speed*Math.random(); 
     });
   }
@@ -172,8 +172,8 @@ class ParticleContainer{
 
 //========================== SPAWN PARTICLES ==============================//
 // particleContainer Constructor(y,speed,density,sizeLimit,spread,fill)
-let fastClump = new ParticleContainer(-2550,1,0,8,5180,.74);
-let floaters = new ParticleContainer(camera.position.y,0,1100,1,distance/4,.85)
+let fastClump = new ParticleContainer(-2550,1,600,8,5180,.74);
+let floaters = new ParticleContainer(camera.position.y,0,1100,3,distance/4,.85)
 console.log(floaters)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
@@ -223,8 +223,8 @@ var animate = function () {
   ambient.intensity > .3 ? ambient.intensity -= .09 : ambient.intensity;
   (random > .2) ? light.position.y += 1050 : light.position.y -= 250;
 
-  // CAMERA
-  // camera1.movement(delta,random);
+  //CAMERA
+  camera1.movement(delta,random);
 
   // Send planes that are below camera to the back of the tunnel.
   // Made this an IFFE just for the hell of it.
@@ -243,7 +243,7 @@ var animate = function () {
   // fastClump Particles
   // console.log(fastClump.particleCloud.position.y)
   fastClump.lag(random);
-  // fastClump.surge();
+  fastClump.surge();
   fastClumpLight.position.y = fastClump.particleCloud.position.y;
   fastClump.particleCloud.geometry.verticesNeedUpdate = true;
   
