@@ -13,7 +13,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance*4);
 
 // Initiate Program
-init(distance, -80, 1.92, 655);
+init(distance, -80, .92, 655);
 function init(depth,camStart,descent,radius){
   distance = depth;
   descentSpeed = descent;
@@ -32,7 +32,7 @@ light.position.y = 2410;
 scene.add( light );
 
 // FastClump Light
-var fastClumpLight = new THREE.PointLight( 0xffffff, 2, tunnelRadius*1.2, .9);
+var fastClumpLight = new THREE.PointLight( 0xffffff, 2, tunnelRadius*1.2, .8);
 scene.add( fastClumpLight );
 
 // AMBIENT LIGHT
@@ -151,29 +151,31 @@ class ParticleContainer{
     this.particleCloud.position.y += this._initialSpeed + this._acc;
     if(Math.random() > .95){
       if(this.particleCloud.position.y > distance*4){
-        this.particleCloud.position.y = camera.position.y - this._spread - 35;
-        this._acc = 1;
+        this.particleCloud.position.y = camera.position.y - this._spread/2-150;
+        this._acc = .06;
         this._delta = 0;
       }
     }
+    // console.log(this.particleCloud)
   } 
   recycle(){
+    // console.log(camera.position.y)
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      if(camera.position.y > vertex.y){
+      if(vertex.y > camera.position.y + distance/4){
         // console.log(vertex)
-        vertex.y += distance/4;
-        // console.log(vertex)
+        vertex.y = camera.position.y - 20;
+        console.log(this.particleCloud)
+        console.log(camera.position.y)
       }
     })
-    // console.log(camera.position.y);
   }
 }
 //=====================================================================//
 
 //========================== SPAWN PARTICLES ==============================//
-// particleContainer Constructor(y,speed,density,sizeLimit,spread,fill)
-let fastClump = new ParticleContainer(-2550,1,600,8,5180,.74);
-let floaters = new ParticleContainer(camera.position.y,0,1100,3,distance/4,.85)
+// particleContainer Constructor(y,speed,density,particleSizeLimit,spread,fill)
+let fastClump = new ParticleContainer(-distance*3,1,800,8,distance,.74);
+let floaters = new ParticleContainer(camera.position.y-100,0,1400,2.2,distance/2,.85)
 console.log(floaters)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
