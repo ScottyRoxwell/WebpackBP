@@ -3,6 +3,7 @@ import noise from './utils/perlinNoise';
 import { identifier, isInterfaceDeclaration, thisExpression } from 'babel-types';
 import { transcode } from 'buffer';
 import { ColorKeyframeTrack } from 'three';
+import { deepStrictEqual } from 'assert';
 
 // Variables
 let distance = 5000;
@@ -134,10 +135,10 @@ class ParticleContainer{
       );
       // if(this._opacity) particle.opacity = Math.random()*.9;
       particle.speed = Math.random() > .1 ? Math.random()*.3 : Math.random();
-      particle.y > camera.position.y ? particle.ignited = true : particle.ignited = false;
+      // particle.y > camera.position.y ? particle.ignited = true : particle.ignited = false;
       geometry.vertices.push(particle);
     }
-    let material = new THREE.PointsMaterial({
+      let material = new THREE.PointsMaterial({
       color: 0xffffff,
       opacity: this._opacity,
       size: Math.random()*this._size,
@@ -147,22 +148,23 @@ class ParticleContainer{
     this.particleCloud.position.y = this._y;
   }
   setY(){
-    return Math.random() > .2 ? Math.random()*800 : camera.position.y;
+    return Math.random() > .2 ? Math.random()*1000 : camera.position.y;
     // vertex.ignited = true;
   }
   jitter(amount, delta){
     let s, t, q, r;
     
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      delta+=.01;      
+      delta+=.3;      
       s = noise(delta);
       t = noise(delta+7);
       q = THREE.Math.mapLinear(s,0,1,-amount,amount);
       r = THREE.Math.mapLinear(t,0,1,-amount,amount);
       vertex.x += q*vertex.speed;
-      vertex.y += vertex.speed*6;
+      vertex.y += vertex.speed*10;
       vertex.z += r*vertex.speed; 
     });
+    this.particleCloud.geometry.verticesNeedUpdate = true;
   }
   surge(){
     (!this.initialSurge) ? this._delta++ : this._delta = 0;
@@ -173,7 +175,7 @@ class ParticleContainer{
     this._acc += this._delta;
     this.particleCloud.position.y += this._initialSpeed + this._acc;
     if(this.particleCloud.position.y > camera.position.y + distance*6){
-      this.particleCloud.position.y = camera.position.y - this._spread;
+      this.particleCloud.position.y = camera.position.y - this._spread-130;
       this._acc = 0;
       this._delta = 0;
       this.runningDelta = false;
@@ -188,30 +190,36 @@ class ParticleContainer{
     // console.log("Camera: " + camera.position.y)
   } 
   recycle(cameraSpeed){
-    // console.log("Particle cloud: " + this.particleCloud.position.y)
-    this.particleCloud.position.y += descentSpeed;
+    console.log("Particle cloud: " + this.particleCloud.position.y)
+    this.particleCloud.position.y += descentSpeed*cameraSpeed;
+    // if(this.particleCloud.position.y > camera.position.y + 1000) this.particleCloud.position.y = camera.position.y;
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      if(vertex.y > camera.position.y + 200){
-        vertex.y = camera.position.y -5;
+      if(vertex.y > camera.position.y + 300){
+        vertex.speed  *= Math.random()*-1;
+        // this.particleCloud.geometry.verticesNeedUpdate = true;
       }
-      if(vertex.speed < descentSpeed+cameraSpeed && vertex.y < -5){
-        vertex.y = camera.position.y +20;
+      if(vertex.speed <= descentSpeed*cameraSpeed && vertex.y <= camera.position.y){
+        vertex.speed *= 1.2;
+        // this.particleCloud.geometry.verticesNeedUpdate = true;
       }
+      if(Math.sign(vertex.speed) === -1 && vertex.y <= camera.position.y -100){
+        vertex.speed *= (Math.random()*-1) + descentSpeed*cameraSpeed;
+        // this.particleCloud.geometry.verticesNeedUpdate = true;
+      }
+      
     })
+    console.log("Camera: " + camera.position.y)
     // if(this.particleCloud.position.y > camera.position.y + distance/2){
     //   this.particleClous.position.y = camera.position.y;
     // }
-  }
-  spawn(){
-
   }
 }
 //=====================================================================//
 
 //========================== SPAWN PARTICLES ==============================//
 // particleContainer Constructor(y,speed,density,particleSizeLimit,spread,fill,opacity)
-let fastClump = new ParticleContainer(-distance*.1-20,1,1200,8,distance*1,.74,1,true);
-let floaters = new ParticleContainer(camera.position.y+250,0,1600,2.2,distance/4,.85,.8)
+let fastClump = new ParticleContainer(camera.position.y-80,1,1200,8,distance*1,.74,1,true);
+let floaters = new ParticleContainer(camera.position.y,0,1600,2.2,0,.85,.8)
 // console.log(floaters)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
@@ -311,6 +319,7 @@ var animate = function () {
 
   // CAMERA
   camera1.movement(delta,random);
+
   // Send planes that are below camera to the back of the tunnel.
   // Made this an IFFE just for the hell of it.
   (function recyclePlanes(arr){
@@ -328,14 +337,13 @@ var animate = function () {
   // fastClump Particles
   fastClump.surge();
   fastClumpLight.position.y = fastClump.particleCloud.position.y+300;
-  fastClump.particleCloud.geometry.verticesNeedUpdate = true;
+  // fastClump.particleCloud.geometry.verticesNeedUpdate = true;
   
 
   // floater Particles
-  floaters.jitter(15,jitterDelta*.02); 
+  floaters.jitter(5,jitterDelta*.3); 
   floaters.recycle(cameraSpeed);
-  floaters.particleCloud.geometry.verticesNeedUpdate = true;
-  
+
   // console.log(camera.position.y)
 	renderer.render( scene, camera );
 };
