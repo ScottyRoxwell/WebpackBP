@@ -2,6 +2,7 @@ import {THREE} from '../vendor';
 import noise from './utils/perlinNoise';
 import { identifier, isInterfaceDeclaration, thisExpression } from 'babel-types';
 import { transcode } from 'buffer';
+import { ColorKeyframeTrack } from 'three';
 
 // Variables
 let distance = 5000;
@@ -10,7 +11,7 @@ let density = 75;
 let tunnelRadius;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance*4);
+const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance*6);
 
 // Initiate Program
 init(distance, -80, 1.22, 655);
@@ -22,9 +23,6 @@ function init(depth,camStart,descent,radius){
   camera.lookAt(0,distance,0);
 }
 
-let test = noise(34)
-console.log(test)
-
 //==================================== LIGHTS =======================================//
 // Sparks
 var light = new THREE.PointLight( 0xdcceee, .5, 1270);
@@ -32,12 +30,19 @@ light.position.y = 2410;
 scene.add( light );
 
 // FastClump Light
-var fastClumpLight = new THREE.PointLight( 0xffffff, 2, tunnelRadius*1.2, .8);
+var fastClumpLight = new THREE.PointLight( 0xffffff, 2, tunnelRadius*1.2, .3);
 scene.add( fastClumpLight );
 
 // AMBIENT LIGHT
 var ambient= new THREE.AmbientLight( 0x40ae49, .3 ); 
 scene.add( ambient );
+
+// Random Light
+var randomLight = new THREE.PointLight(0x00ff00, 19,2900,20)
+scene.add(randomLight);
+
+var randomLight2 = new THREE.PointLight(0x00ff00, 19,2900,20)
+scene.add(randomLight2);
 //=================================================================================//
 
 //Set Up DOM Element
@@ -45,6 +50,11 @@ var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth,window.innerHeight);
 const canvas = document.querySelector('.canvas');
 canvas.appendChild(renderer.domElement);
+document.body.addEventListener('keypress',(e)=>{
+  if(e.key === "s") camera.position.y += 50;
+  if(e.key === "d") camera.position.y -= 50;
+  if(e.key === "f") camera.rotation.x += Math.PI;
+});
 
 // CAMERA CLASS
 class Camera{
@@ -55,7 +65,9 @@ class Camera{
     camera.position.x = Math.cos(deltaTime*.01224)*200;
     camera.position.z = Math.sin(deltaTime*.01224)*80;
     camera.rotation.z += .003;
-    randomNum > .3 ? camera.rotation.z+= .003 : camera.rotation.z -=.001;
+    let t = noise(deltaTime*.1);
+    let u = THREE.Math.mapLinear(t,0,1,-.001,.003);
+    camera.rotation.z += u;
  
     cameraSpeed = (randomNum > .98) ? 2 : 1;
     if(cameraSpeed > .005){
@@ -96,7 +108,7 @@ class Plane{
 
 // Particle Container Class
 class ParticleContainer{
-  constructor(y,initialSpeed,particleCount,sizeLimit,spread,fill,opacity=1){
+  constructor(y,initialSpeed,particleCount,sizeLimit,spread,fill,opacity=1,chunk=false){
     this._y = y;
     this._initialSpeed = initialSpeed;
     this._particleCount = particleCount;
@@ -105,19 +117,24 @@ class ParticleContainer{
     this._fill = fill;
     this._acc = 1;
     this._delta = 0;
-    this._opacity = opacity;  
+    this._opacity = opacity;
+    this.initialSurge = false;
+    this.runningDelta;
+    this._chunk = chunk;
 
     let geometry = new THREE.Geometry();
     for(let i = 0; i < this._particleCount; i++){
+
       let randomTheta = Math.random()*Math.PI*2;
       let randomRadius = Math.random()*tunnelRadius*this._fill;
       let particle = new THREE.Vector3(
         Math.cos(randomTheta)*randomRadius,
-        Math.random()*this._spread,
+        this._chunk ? Math.random()*this._spread : this.setY(),
         Math.sin(randomTheta)*randomRadius
       );
       // if(this._opacity) particle.opacity = Math.random()*.9;
       particle.speed = Math.random() > .1 ? Math.random()*.3 : Math.random();
+      particle.y > camera.position.y ? particle.ignited = true : particle.ignited = false;
       geometry.vertices.push(particle);
     }
     let material = new THREE.PointsMaterial({
@@ -129,57 +146,73 @@ class ParticleContainer{
     this.particleCloud = new THREE.Points(geometry,material);
     this.particleCloud.position.y = this._y;
   }
-  lag(randomNumber){
-    this.particleCloud.geometry.vertices.forEach(vertex => {
-      randomNumber < .99 ? vertex.y += 1 : vertex.y -= 500;
-    });
+  setY(){
+    return Math.random() > .2 ? Math.random()*800 : camera.position.y;
+    // vertex.ignited = true;
   }
   jitter(amount, delta){
-    let shake = amount;
+    let s, t, q, r;
+    
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      delta += .01;
-      let p = noise(delta*.01);
-      let q = noise((delta+.03)*.01);
-      p = THREE.Math.mapLinear(p,0,1,-shake,shake);
-      
-
-      vertex.x += p*vertex.speed*Math.random();
-      vertex.y += vertex.speed*10;
-      vertex.z += q*vertex.speed*Math.random(); 
+      delta+=.01;      
+      s = noise(delta);
+      t = noise(delta+7);
+      q = THREE.Math.mapLinear(s,0,1,-amount,amount);
+      r = THREE.Math.mapLinear(t,0,1,-amount,amount);
+      vertex.x += q*vertex.speed;
+      vertex.y += vertex.speed*6;
+      vertex.z += r*vertex.speed; 
     });
   }
   surge(){
-    this._delta++;
-    this._acc += this._delta*7;
-    this.particleCloud.position.y += this._initialSpeed + this._acc;
-    if(Math.random() > .95){
-      if(this.particleCloud.position.y > distance*4){
-        this.particleCloud.position.y = camera.position.y - this._spread/2-150;
-        this._acc = .06;
-        this._delta = 0;
-      }
+    (!this.initialSurge) ? this._delta++ : this._delta = 0;
+    if(this.runningDelta && this.initialSurge){
+      this._delta++
     }
-    // console.log(this.particleCloud)
+    this._delta*=200;
+    this._acc += this._delta;
+    this.particleCloud.position.y += this._initialSpeed + this._acc;
+    if(this.particleCloud.position.y > camera.position.y + distance*6){
+      this.particleCloud.position.y = camera.position.y - this._spread;
+      this._acc = 0;
+      this._delta = 0;
+      this.runningDelta = false;
+      this.initialSurge = true;
+    }
+    if(Math.random() > .95 && !this.runningDelta && this.initialSurge){
+      this.runningDelta = true;
+      this._acc = 10;
+      this._delta = 17;
+    }
+    // console.log("Cloud: "  + this.particleCloud.position.y)
+    // console.log("Camera: " + camera.position.y)
   } 
-  recycle(){
-    // console.log(camera.position.y)
+  recycle(cameraSpeed){
+    // console.log("Particle cloud: " + this.particleCloud.position.y)
+    this.particleCloud.position.y += descentSpeed;
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      if(vertex.y > camera.position.y + distance/4){
-        // console.log(vertex)
-        vertex.y = camera.position.y - 20;
-        console.log(this.particleCloud)
-        console.log(camera.position.y)
+      if(vertex.y > camera.position.y + 200){
+        vertex.y = camera.position.y -5;
+      }
+      if(vertex.speed < descentSpeed+cameraSpeed && vertex.y < -5){
+        vertex.y = camera.position.y +20;
       }
     })
+    // if(this.particleCloud.position.y > camera.position.y + distance/2){
+    //   this.particleClous.position.y = camera.position.y;
+    // }
+  }
+  spawn(){
+
   }
 }
 //=====================================================================//
 
 //========================== SPAWN PARTICLES ==============================//
 // particleContainer Constructor(y,speed,density,particleSizeLimit,spread,fill,opacity)
-let fastClump = new ParticleContainer(-distance*3,1,800,8,distance,.74);
-let floaters = new ParticleContainer(camera.position.y-100,0,1200,2.2,distance/4,.85,.8)
-console.log(floaters)
+let fastClump = new ParticleContainer(-distance*.1-20,1,1200,8,distance*1,.74,1,true);
+let floaters = new ParticleContainer(camera.position.y+250,0,1600,2.2,distance/4,.85,.8)
+// console.log(floaters)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
 
@@ -211,11 +244,16 @@ while(i < distance){
 
 // =========================== ANIMATION RENDERING =============================//
 let delta = 0;
+let jitterDelta = 0;
 let cameraSpeed;
+let lights1 =  true;
+let lights2 = true;
+let lightTimer = 0;
 var animate = function () {
   requestAnimationFrame( animate );
   let random = Math.random();
   delta++;
+  jitterDelta+=.9;
   
   // ANIMATE LIGHTS
   (random > .97) ? ambient.intensity += .9 : ambient.intensity -= (ambient.intensity > .4) ? .04 : 0;
@@ -227,10 +265,52 @@ var animate = function () {
   light.intensity > .001 ? light.intensity -= .03 : light.intensity;
   ambient.intensity > .3 ? ambient.intensity -= .09 : ambient.intensity;
   (random > .2) ? light.position.y += 1050 : light.position.y -= 250;
+  
 
-  //CAMERA
+  if(lightTimer <= 40 && lights1 === false && lights2 === false){
+    lightTimer++;
+    if(lightTimer === 40) {
+      lights1 = true
+      lights2 = true;
+      lightTimer = Math.floor(Math.random()*40);
+    }
+  }  
+  if(lightTimer < 100 && lights1 && lights2) {
+    lightTimer++;
+  } else if(lightTimer === 100 && lights1 && lights2){
+    lights1 = false;
+    lights2 = false;
+    lightTimer = Math.floor(Math.random()*40); 
+  }
+
+  
+  if(lights1){
+    randomLight.intensity = 19;
+    let pAngle = noise(jitterDelta)
+    let pX = THREE.Math.mapLinear(pAngle,0,1,0,Math.PI);
+    let pZ = THREE.Math.mapLinear(pAngle+.5,0,1,0,Math.PI);
+    randomLight.position.x = Math.cos(pX)*(tunnelRadius-25);
+    randomLight.position.y = camera.position.y + (pAngle+.57)*1200;
+    randomLight.position.z = Math.sin(pZ)*(tunnelRadius-25);
+  } else {
+    randomLight.intensity = 0;
+  }
+  
+
+  if(lights2){
+    randomLight2.intensity = 19;
+    let pAngle2 = noise(jitterDelta) + .4
+    let pX2 = THREE.Math.mapLinear(pAngle2,0,1,0,Math.PI);
+    let pZ2 = THREE.Math.mapLinear(pAngle2+.6,0,1,0,Math.PI);
+    randomLight2.position.x = Math.cos(pX2)*(tunnelRadius-25);
+    randomLight2.position.y = camera.position.y + (pAngle2+.8)*2500;
+    randomLight2.position.z = Math.sin(pZ2)*(tunnelRadius-25);
+  } else {
+    randomLight2.intensity = 0;
+  }
+
+  // CAMERA
   camera1.movement(delta,random);
-
   // Send planes that are below camera to the back of the tunnel.
   // Made this an IFFE just for the hell of it.
   (function recyclePlanes(arr){
@@ -246,18 +326,17 @@ var animate = function () {
 
 
   // fastClump Particles
-  // console.log(fastClump.particleCloud.position.y)
-  fastClump.lag(random);
   fastClump.surge();
-  fastClumpLight.position.y = fastClump.particleCloud.position.y;
+  fastClumpLight.position.y = fastClump.particleCloud.position.y+300;
   fastClump.particleCloud.geometry.verticesNeedUpdate = true;
   
 
   // floater Particles
-  floaters.jitter(3,delta); 
-  floaters.recycle();
+  floaters.jitter(15,jitterDelta*.02); 
+  floaters.recycle(cameraSpeed);
   floaters.particleCloud.geometry.verticesNeedUpdate = true;
-
+  
+  // console.log(camera.position.y)
 	renderer.render( scene, camera );
 };
 
