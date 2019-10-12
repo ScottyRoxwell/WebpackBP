@@ -27,6 +27,10 @@ module.exports = {
             outputPath: "images"
           }
         }
+      },
+      {
+        test: /three\/examples\/js/,
+        use: 'imports-loader?THREE=three'
       }
     ]
   }

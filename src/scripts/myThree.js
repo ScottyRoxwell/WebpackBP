@@ -1,5 +1,15 @@
 import {THREE} from '../vendor';
 import noise from './utils/perlinNoise';
+import "../../node_modules/three/examples/js/postprocessing/EffectComposer";
+import "../../node_modules/three/examples/js/shaders/CopyShader";
+import "../../node_modules/three/examples/js/postprocessing/RenderPass"; 
+// import "../../node_modules/three/examples/js/shaders/LuminosityHighPassShader";
+import "../../node_modules/three/examples/js/postprocessing/ShaderPass";
+
+import "../../node_modules/three/examples/js/shaders/ConvolutionShader";
+import "../../node_modules/three/examples/js/postprocessing/BloomPass";
+// import "../../node_modules/three/examples/js/shaders/DigitalGlitch.js";
+// import "../../node_modules/three/examples/js/postprocessing/GlitchPass";
 import { identifier, isInterfaceDeclaration, thisExpression } from 'babel-types';
 import { transcode } from 'buffer';
 import { ColorKeyframeTrack } from 'three';
@@ -190,11 +200,10 @@ class ParticleContainer{
     // console.log("Camera: " + camera.position.y)
   } 
   recycle(cameraSpeed){
-    console.log("Particle cloud: " + this.particleCloud.position.y)
+    // console.log("Particle cloud: " + this.particleCloud.position.y)
     this.particleCloud.position.y += descentSpeed*cameraSpeed;
-    // if(this.particleCloud.position.y > camera.position.y + 1000) this.particleCloud.position.y = camera.position.y;
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      if(vertex.y > camera.position.y + 300){
+      if(vertex.y > camera.position.y + 220){
         vertex.speed  *= Math.random()*-1;
         // this.particleCloud.geometry.verticesNeedUpdate = true;
       }
@@ -207,11 +216,8 @@ class ParticleContainer{
         // this.particleCloud.geometry.verticesNeedUpdate = true;
       }
       
-    })
-    console.log("Camera: " + camera.position.y)
-    // if(this.particleCloud.position.y > camera.position.y + distance/2){
-    //   this.particleClous.position.y = camera.position.y;
-    // }
+    });
+    // console.log("Camera: " + camera.position.y)
   }
 }
 //=====================================================================//
@@ -249,6 +255,19 @@ while(i < distance){
   // Space allotted per ring
   i+=35;
 }
+
+// ============================= POST PROCESSING ================================//
+//COMPOSER
+// const composer = new THREE.EffectComposer(renderer);
+
+// //PASSES
+// const renderPass = new THREE.RenderPass(scene, camera);
+// composer.addPass(renderPass);
+// renderPass.renderToScreen = true;
+
+// const pass1 = new THREE.ShaderPass(THREE.BloomPass(3,25,5,256));
+// composer.addPass(pass1);
+// pass1.renderToScreen = true;
 
 // =========================== ANIMATION RENDERING =============================//
 let delta = 0;
@@ -345,7 +364,8 @@ var animate = function () {
   floaters.recycle(cameraSpeed);
 
   // console.log(camera.position.y)
-	renderer.render( scene, camera );
+  renderer.render( scene, camera );
+	// composer.render( scene, camera );
 };
 
 animate();
