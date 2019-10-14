@@ -27,11 +27,12 @@ module.exports = {
             outputPath: "images"
           }
         }
-      },
-      {
-        test: /three\/examples\/js/,
-        use: 'imports-loader?THREE=three'
       }
+      // Code for "imports-loader" package
+      // {
+      //   test: /three\/examples\/js/,
+      //   use: 'imports-loader?THREE=three'
+      // }
     ]
   }
 };

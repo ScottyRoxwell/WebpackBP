@@ -1,13 +1,11 @@
 import {THREE} from '../vendor';
 import noise from './utils/perlinNoise';
-import "../../node_modules/three/examples/js/postprocessing/EffectComposer";
-import "../../node_modules/three/examples/js/shaders/CopyShader";
-import "../../node_modules/three/examples/js/postprocessing/RenderPass"; 
-// import "../../node_modules/three/examples/js/shaders/LuminosityHighPassShader";
-import "../../node_modules/three/examples/js/postprocessing/ShaderPass";
 
-import "../../node_modules/three/examples/js/shaders/ConvolutionShader";
-import "../../node_modules/three/examples/js/postprocessing/BloomPass";
+import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
+import {RenderPass} from "three/examples/jsm/postprocessing/RenderPass"; 
+import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass";
+import {UnrealBloomPass} from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import {BloomPass} from "three/examples/jsm/postprocessing/BloomPass";
 // import "../../node_modules/three/examples/js/shaders/DigitalGlitch.js";
 // import "../../node_modules/three/examples/js/postprocessing/GlitchPass";
 import { identifier, isInterfaceDeclaration, thisExpression } from 'babel-types';
@@ -16,7 +14,7 @@ import { ColorKeyframeTrack } from 'three';
 import { deepStrictEqual } from 'assert';
 
 // Variables
-let distance = 5000;
+let distance = 6000;
 let descentSpeed;
 let density = 75;
 let tunnelRadius;
@@ -98,7 +96,7 @@ class Plane{
     this.y = y;
     this.z = this.radius * Math.sin(this.theta);
 
-    let geometry = new THREE.PlaneGeometry( 39, 30 );
+    let geometry = new THREE.PlaneBufferGeometry( 39, 30 );
     let material = new THREE.MeshLambertMaterial( {color: 0xeeccfe, side: THREE.DoubleSide} );
     this.mesh = new THREE.Mesh( geometry, material );
     this.mesh.position.x = this.x;
@@ -258,14 +256,14 @@ while(i < distance){
 
 // ============================= POST PROCESSING ================================//
 //COMPOSER
-// const composer = new THREE.EffectComposer(renderer);
+// const composer = new EffectComposer(renderer);
 
 // //PASSES
-// const renderPass = new THREE.RenderPass(scene, camera);
+// const renderPass = new RenderPass(scene, camera);
 // composer.addPass(renderPass);
-// renderPass.renderToScreen = true;
+// // renderPass.renderToScreen = true;
 
-// const pass1 = new THREE.ShaderPass(THREE.BloomPass(3,25,5,256));
+// const pass1 = new ShaderPass(BloomPass());
 // composer.addPass(pass1);
 // pass1.renderToScreen = true;
 
