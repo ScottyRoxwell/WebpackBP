@@ -222,7 +222,7 @@ class ParticleContainer{
 
 //========================== SPAWN PARTICLES ==============================//
 // particleContainer Constructor(y,speed,density,particleSizeLimit,spread,fill,opacity)
-let fastClump = new ParticleContainer(camera.position.y-80,1,1200,8,distance*1,.74,1,true);
+let fastClump = new ParticleContainer(camera.position.y-80,1,1200,8,distance*.69,.74,1,true);
 let floaters = new ParticleContainer(camera.position.y,0,1600,2.2,0,.85,.8)
 // console.log(floaters)
 scene.add(fastClump.particleCloud);
