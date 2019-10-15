@@ -46,12 +46,19 @@ scene.add( fastClumpLight );
 var ambient= new THREE.AmbientLight( 0x40ae49, .3 ); 
 scene.add( ambient );
 
+// var ambient2= new THREE.AmbientLight( 0x40ae49, 1 ); 
+// scene.add( ambient2 );
+
 // Random Light
 var randomLight = new THREE.PointLight(0x00ff00, 19,2900,20)
 scene.add(randomLight);
 
 var randomLight2 = new THREE.PointLight(0x00ff00, 19,2900,20)
 scene.add(randomLight2);
+
+var cloudLightning = new THREE.PointLight(0x00ff00, 149,150,.5)
+cloudLightning.position.y = distance+20;
+scene.add(cloudLightning);
 //=================================================================================//
 
 //Set Up DOM Element
@@ -85,6 +92,37 @@ class Camera{
   camera.position.y += descentSpeed*cameraSpeed;
   }
 }
+
+//=========================== CLOUDS =============================//
+// const cloudParticles = [];
+
+// let loader = new THREE.TextureLoader();
+// loader.load('../images/cloud4.png', (texture)=>{
+//   let cloudGeo = new THREE.PlaneBufferGeometry(500,615);
+//   let cloudMat = new THREE.MeshLambertMaterial({
+//     map: texture,
+//     transparent: true
+//   });
+
+//   for(let i = 0; i < 14; i++){
+//     let cloud = new THREE.Mesh(cloudGeo,cloudMat);
+//     cloud.position.set(
+//       Math.cos(Math.random()*Math.PI*2)*Math.random()*tunnelRadius,
+//       distance+2*i,
+//       Math.sin(Math.random()*Math.PI*2)*Math.random()*tunnelRadius
+//     );
+//     cloud.rotation.x = Math.PI/2;
+//     cloud.rotation.y = 0
+//     cloud.rotation.z = Math.random()*Math.PI*2;
+//     cloud.opacity = 0.0001;
+//     cloudParticles.push(cloud);
+//     scene.add(cloud);
+//   };
+// });
+
+// let h1 = document.querySelector('h1');
+// h1.innerHTML = "<img src='../../images/cloud1.png'>"
+
 
 //=============================== GEOMETRIES =================================//
 // Plane Class
@@ -263,7 +301,7 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 // renderPass.renderToScreen = true;
 
-const unrealPass = new UnrealBloomPass(256,1.5,.2,0);
+const unrealPass = new UnrealBloomPass(256,1.5,.2,.2);
 composer.addPass(unrealPass);
 unrealPass.renderToScreen = true;
 
@@ -279,6 +317,9 @@ var animate = function () {
   let random = Math.random();
   delta++;
   jitterDelta+=.9;
+
+  // CAMERA
+  camera1.movement(delta,random);
   
   // ANIMATE LIGHTS
   (random > .97) ? ambient.intensity += .9 : ambient.intensity -= (ambient.intensity > .4) ? .04 : 0;
@@ -334,8 +375,16 @@ var animate = function () {
     randomLight2.intensity = 0;
   }
 
-  // CAMERA
-  camera1.movement(delta,random);
+  // // ANIMATE CLOUDS
+  // cloudParticles.forEach(cloud=>{
+  //   cloud.rotation.z -= 0.009;
+  //   cloud.position.y += cameraSpeed*descentSpeed;
+  // });
+  // // debugger;
+  // cloudLightning.position.x = Math.cos(Math.random()*Math.PI*2)*Math.random()*tunnelRadius*.75;
+  // cloudLightning.position.y = Math.random()*(camera.position.y + distance+21) + (camera.position.y + distance+20);
+  // cloudLightning.position.z = Math.sin(Math.random()*Math.PI*2)*Math.random()*tunnelRadius*.75;
+  
 
   // Send planes that are below camera to the back of the tunnel.
   // Made this an IFFE just for the hell of it.
@@ -361,7 +410,7 @@ var animate = function () {
   floaters.jitter(5,jitterDelta*.3); 
   floaters.recycle(cameraSpeed);
 
-  // console.log(camera.position.y)
+  // console.log(scene)
   // renderer.render( scene, camera );
 	composer.render( scene, camera );
 };

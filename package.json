@@ -7,7 +7,7 @@
   "scripts": {
     "start": "webpack-dev-server  --config config/webpack.dev.js --open",
     "build": "webpack --config config/webpack.prod.js",
-    "dev": "nodemon --watch config --watch src/server src/server/main.js"
+    "dev": "nodemon --inspect=9200 --watch config --watch src/server src/server/main.js"
   },
   "author": "Scott Christopher",
   "license": "ISC",
@@ -31,7 +31,9 @@
     "style-loader": "^1.0.0",
     "webpack": "^4.41.0",
     "webpack-cli": "^3.3.9",
+    "webpack-dev-middleware": "^3.7.2",
     "webpack-dev-server": "^3.8.1",
+    "webpack-hot-middleware": "^2.25.0",
     "webpack-merge": "^4.2.2"
   },
   "dependencies": {
