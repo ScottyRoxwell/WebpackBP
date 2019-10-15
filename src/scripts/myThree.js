@@ -23,7 +23,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,1,distance*6);
 
 // Initiate Program
-init(distance, -80, 1.22, 655);
+init(distance, -80, 2.98, 655);
 function init(depth,camStart,descent,radius){
   distance = depth;
   descentSpeed = descent;
@@ -181,6 +181,7 @@ class ParticleContainer{
       );
       // if(this._opacity) particle.opacity = Math.random()*.9;
       particle.speed = Math.random() > .1 ? Math.random()*.3 : Math.random();
+      particle.north = true;
       // particle.y > camera.position.y ? particle.ignited = true : particle.ignited = false;
       geometry.vertices.push(particle);
     }
@@ -194,7 +195,7 @@ class ParticleContainer{
     this.particleCloud.position.y = this._y;
   }
   setY(){
-    return Math.random() > .2 ? Math.random()*1000 : camera.position.y;
+    return Math.random() > .2 ? Math.random()*300+100 : camera.position.y;
     // vertex.ignited = true;
   }
   jitter(amount, delta){
@@ -239,18 +240,20 @@ class ParticleContainer{
     // console.log("Particle cloud: " + this.particleCloud.position.y)
     this.particleCloud.position.y += descentSpeed*cameraSpeed;
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      if(vertex.y > camera.position.y + 220){
-        vertex.speed  *= Math.random()*-1;
-        // this.particleCloud.geometry.verticesNeedUpdate = true;
+      if(vertex.y > camera.position.y + 300 && vertex.north === true){
+        vertex.speed  *= Math.random()*-2;
+        vertex.north = false;
+        this.particleCloud.geometry.verticesNeedUpdate = true;
       }
-      if(vertex.speed <= descentSpeed*cameraSpeed && vertex.y <= camera.position.y){
-        vertex.speed *= 1.2;
-        // this.particleCloud.geometry.verticesNeedUpdate = true;
+      if(vertex.speed <= descentSpeed*cameraSpeed && vertex.y < camera.position.y && vertex.north === false){
+        vertex.speed *= Math.random()*-2;
+        vertex.north = true;
+        this.particleCloud.geometry.verticesNeedUpdate = true;
       }
-      if(Math.sign(vertex.speed) === -1 && vertex.y <= camera.position.y -100){
-        vertex.speed *= (Math.random()*-1) + descentSpeed*cameraSpeed;
-        // this.particleCloud.geometry.verticesNeedUpdate = true;
-      }
+      // if(Math.sign(vertex.speed) === -1 && vertex.y <= camera.position.y -100){
+      //   vertex.speed *= (Math.random()*-1) + descentSpeed*cameraSpeed;
+      //   this.particleCloud.geometry.verticesNeedUpdate = true;
+      // }
       
     });
     // console.log("Camera: " + camera.position.y)
@@ -261,7 +264,7 @@ class ParticleContainer{
 //========================== SPAWN PARTICLES ==============================//
 // particleContainer Constructor(y,speed,density,particleSizeLimit,spread,fill,opacity)
 let fastClump = new ParticleContainer(camera.position.y-80,1,1200,8,distance*.69,.74,1,true);
-let floaters = new ParticleContainer(camera.position.y,0,1600,2.2,0,.85,.8)
+let floaters = new ParticleContainer(camera.position.y,0,2600,2.2,0,.85,.8)
 // console.log(floaters)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
@@ -301,7 +304,7 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 // renderPass.renderToScreen = true;
 
-const unrealPass = new UnrealBloomPass(256,1.5,.2,.2);
+const unrealPass = new UnrealBloomPass(256,1.3,.1,.09);
 composer.addPass(unrealPass);
 unrealPass.renderToScreen = true;
 
