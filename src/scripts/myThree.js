@@ -256,16 +256,16 @@ while(i < distance){
 
 // ============================= POST PROCESSING ================================//
 //COMPOSER
-// const composer = new EffectComposer(renderer);
+const composer = new EffectComposer(renderer);
 
-// //PASSES
-// const renderPass = new RenderPass(scene, camera);
-// composer.addPass(renderPass);
-// // renderPass.renderToScreen = true;
+//PASSES
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+// renderPass.renderToScreen = true;
 
-// const pass1 = new ShaderPass(BloomPass());
-// composer.addPass(pass1);
-// pass1.renderToScreen = true;
+const unrealPass = new UnrealBloomPass(256,1.5,.2,0);
+composer.addPass(unrealPass);
+unrealPass.renderToScreen = true;
 
 // =========================== ANIMATION RENDERING =============================//
 let delta = 0;
@@ -362,8 +362,8 @@ var animate = function () {
   floaters.recycle(cameraSpeed);
 
   // console.log(camera.position.y)
-  renderer.render( scene, camera );
-	// composer.render( scene, camera );
+  // renderer.render( scene, camera );
+	composer.render( scene, camera );
 };
 
 animate();
