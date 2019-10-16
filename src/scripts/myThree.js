@@ -238,9 +238,9 @@ class ParticleContainer{
   } 
   recycle(cameraSpeed){
     // console.log("Particle cloud: " + this.particleCloud.position.y)
-    this.particleCloud.position.y += descentSpeed*cameraSpeed;
+     this.particleCloud.position.y = camera.position.y;
     this.particleCloud.geometry.vertices.forEach(vertex => {
-      if(vertex.y > camera.position.y + 300 && vertex.north === true){
+      if(vertex.y > camera.position.y + 200 && vertex.north === true){
         vertex.speed  *= Math.random()*-2;
         vertex.north = false;
         this.particleCloud.geometry.verticesNeedUpdate = true;
@@ -264,7 +264,7 @@ class ParticleContainer{
 //========================== SPAWN PARTICLES ==============================//
 // particleContainer Constructor(y,speed,density,particleSizeLimit,spread,fill,opacity)
 let fastClump = new ParticleContainer(camera.position.y-80,1,1200,8,distance*.69,.74,1,true);
-let floaters = new ParticleContainer(camera.position.y,0,2600,2.2,0,.85,.8)
+let floaters = new ParticleContainer(camera.position.y,0,1600,2.2,0,.85,.8)
 // console.log(floaters)
 scene.add(fastClump.particleCloud);
 scene.add(floaters.particleCloud);
